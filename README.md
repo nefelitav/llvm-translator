@@ -1,0 +1,1 @@
+# minijava-static-checking
