@@ -41,7 +41,7 @@ Visitor.r : 8
 ---Methods---
 Visitor.visit : 0
 
------------Class Visitor-----------
+-----------Class MyVisitor-----------
 --Variables---
 ---Methods---
 
