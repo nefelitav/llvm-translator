@@ -13,21 +13,20 @@ public class Main {
         }
         FileInputStream fis = null;
         try {
-            ArrayList<src.Class> classes = new ArrayList<src.Class>();
             fis = new FileInputStream(args[0]);
 
             MiniJavaParser parser = new MiniJavaParser(fis);
             Goal root = parser.Goal();
             System.err.println("Program parsed successfully.");
 
-            // SymbolTable table = new SymbolTable();
+            SymbolTable table = new SymbolTable();
 
-            DeclCollector declCollector = new DeclCollector(classes);
+            DeclCollector declCollector = new DeclCollector(table);
             root.accept(declCollector, null);
 
+            table.printTable();
 
-
-            // TypeChecker typeChecker = new TypeChecker(table, classes);
+            // TypeChecker typeChecker = new TypeChecker(table);
             // root.accept(typeChecker, null);
 
             // table.printData();

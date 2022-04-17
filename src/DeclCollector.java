@@ -8,28 +8,9 @@ import java.util.ArrayList;
 
 public class DeclCollector extends GJDepthFirst<String, Void> {
     SymbolTable table;
-    ArrayList<Class> classes;
 
-    public DeclCollector(ArrayList<Class> classes) {
+    public DeclCollector(SymbolTable table) {
         this.table = table;
-        this.classes = new ArrayList<Class>();
-    }
-
-    public printClasses() {
-        for (Class c : this.classes)
-        { 		      
-            System.out.println(c.name); 		
-        }
-    }
-
-    public boolean inList(String className) {
-        for (Class c : this.classes)
-        { 		      
-            if (c.name == className) {
-                return true;
-            }	
-        }
-        return false;
     }
 
      /**
@@ -55,7 +36,7 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
    public String visit(MainClass n, Void argu) throws Exception {
       String className = n.f1.accept(this, argu);
       Class newClass = new Class(className);
-      this.classes.add(newClass);
+      this.table.addClass(className, newClass);
       System.out.println("MainClass");
       return null;
    }
@@ -70,13 +51,34 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
     */
    public String visit(ClassDeclaration n, Void argu) throws Exception {
       String className = n.f1.accept(this, argu);
-      if (inList(className)) {
-            throw new Exception("Class already declared");
-        }
+      if (this.table.getClass(className) != null) {
+        throw new Exception("Class already declared");
+      }
       Class newClass = new Class(className);
-      this.classes.add(newClass);
+      this.table.addClass(className, newClass);
       System.out.println("ClassDeclaration");
 
+      for (int i = 0; i < n.f3.size(); i++) {
+        String field = n.f3.elementAt(i).accept(this, argu);
+        if (field != null) {
+            String fieldType = field.split(" ")[0];
+            String fieldName = field.split(" ")[1];
+
+            newClass.addField(fieldType, fieldName, table);
+        }
+      }
+      
+      for (int i = 0; i < n.f4.size(); i++) {
+        String method = n.f4.elementAt(i).accept(this, argu);
+        if (method != null) {
+            String methodNameType = method.split(":")[0];
+            String methodType = methodNameType.split(" ")[0];
+            String methodName = methodNameType.split(" ")[1];
+            String methodParams = method.split(":")[1];
+            
+            newClass.addMethod(methodType, methodName, methodParams, table);
+        }
+      }
       return null;
    }
 
@@ -92,16 +94,32 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
     */
    public String visit(ClassExtendsDeclaration n, Void argu) throws Exception {
         String parent = n.f3.accept(this, argu);
-        if (!inList(parent)) {
+        Class parentClass = this.table.getClass(parent);
+        if (parentClass == null) {
             throw new Exception("Parent class is not declared");
         }
         String className = n.f1.accept(this, argu);
-        if (inList(className)) {
+        if (this.table.getClass(className) != null) {
             throw new Exception("Class already declared");
         }
         Class newClass = new Class(className);
-        this.classes.add(newClass);
+        newClass.extending = parentClass;
+        this.table.addClass(className, newClass);
         System.out.println("ClassExtendsDeclaration");
+        String field = n.f5.accept(this, argu);
+        if (field != null) {
+            String fieldType = field.split(" ")[0];
+            String fieldName = field.split(" ")[1];
+            newClass.addField(fieldType, fieldName, table);
+        }
+        String method = n.f6.accept(this, argu);
+        if (method != null) {
+            String methodNameType = method.split(":")[0];
+            String methodType = methodNameType.split(" ")[0];
+            String methodName = methodNameType.split(" ")[1];
+            String methodParams = method.split(":")[1];
+            newClass.addMethod(methodType, methodName, methodParams, table);
+        } 
         return null;
    }
 
@@ -111,9 +129,9 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
     * f2 -> ";"
     */
    public String visit(VarDeclaration n, Void argu) throws Exception {
-        String varType = n.f0.accept(this, argu);
-        String varName = n.f1.accept(this, argu);
-        return null;
+        String fieldType = n.f0.accept(this, argu);
+        String fieldName = n.f1.accept(this, argu);
+        return fieldType + " " + fieldName;
    }
 
    /**
@@ -134,13 +152,102 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
    public String visit(MethodDeclaration n, Void argu) throws Exception {
         String methodType = n.f1.accept(this, argu);
         String methodName = n.f2.accept(this, argu);
-        return null;
+        String methodParams = n.f4.accept(this, argu);
+        return methodType + " " + methodName + ":" + methodParams;
+   }
+
+
+      /**
+    * f0 -> FormalParameter()
+    * f1 -> FormalParameterTail()
+    */
+   public String visit(FormalParameterList n, Void argu) throws Exception {
+        String formalParam = n.f0.accept(this, argu);
+        String formalParamTail = n.f1.accept(this, argu);
+        return formalParam + " " + formalParamTail;
+   }
+
+   /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    */
+   public String visit(FormalParameter n, Void argu) throws Exception {
+        String paramType = n.f0.accept(this, argu);
+        String paramName = n.f1.accept(this, argu);
+        return paramType + " " + paramName;
+   }
+
+   /**
+    * f0 -> ( FormalParameterTerm() )*
+    */
+   public String visit(FormalParameterTail n, Void argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
+
+   /**
+    * f0 -> ","
+    * f1 -> FormalParameter()
+    */
+   public String visit(FormalParameterTerm n, Void argu) throws Exception {
+        return "," + n.f1.accept(this, argu);
    }
 
 
 
 
 
+
+
+   /**
+    * f0 -> ArrayType()
+    *       | BooleanType()
+    *       | IntegerType()
+    *       | Identifier()
+    */
+   public String visit(Type n, Void argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
+
+   /**
+    * f0 -> BooleanArrayType()
+    *       | IntegerArrayType()
+    */
+   public String visit(ArrayType n, Void argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
+
+   /**
+    * f0 -> "boolean"
+    * f1 -> "["
+    * f2 -> "]"
+    */
+   public String visit(BooleanArrayType n, Void argu) throws Exception {
+       return "boolean[]";
+   }
+
+   /**
+    * f0 -> "int"
+    * f1 -> "["
+    * f2 -> "]"
+    */
+   public String visit(IntegerArrayType n, Void argu) throws Exception {
+        return "int[]";
+   }
+
+   /**
+    * f0 -> "boolean"
+    */
+   public String visit(BooleanType n, Void argu) throws Exception {
+        return "boolean";
+   }
+
+   /**
+    * f0 -> "int"
+    */
+   public String visit(IntegerType n, Void argu) throws Exception {
+        return "int";
+   }
+    
     /**
     * f0 -> <IDENTIFIER>
     */
