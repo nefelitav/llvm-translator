@@ -106,20 +106,29 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
         newClass.extending = parentClass;
         this.table.addClass(className, newClass);
         System.out.println("ClassExtendsDeclaration");
-        String field = n.f5.accept(this, argu);
-        if (field != null) {
-            String fieldType = field.split(" ")[0];
-            String fieldName = field.split(" ")[1];
-            newClass.addField(fieldType, fieldName, table);
+
+        for (int i = 0; i < n.f5.size(); i++) {
+            String field = n.f5.elementAt(i).accept(this, argu);
+            if (field != null) {
+                String fieldType = field.split(" ")[0];
+                String fieldName = field.split(" ")[1];
+
+                newClass.addField(fieldType, fieldName, table);
+            }
         }
-        String method = n.f6.accept(this, argu);
-        if (method != null) {
-            String methodNameType = method.split(":")[0];
-            String methodType = methodNameType.split(" ")[0];
-            String methodName = methodNameType.split(" ")[1];
-            String methodParams = method.split(":")[1];
-            newClass.addMethod(methodType, methodName, methodParams, table);
-        } 
+        
+        for (int i = 0; i < n.f6.size(); i++) {
+            String method = n.f6.elementAt(i).accept(this, argu);
+            if (method != null) {
+                String methodNameType = method.split(":")[0];
+                String methodType = methodNameType.split(" ")[0];
+                String methodName = methodNameType.split(" ")[1];
+                String methodParams = method.split(":")[1];
+                
+                newClass.addMethod(methodType, methodName, methodParams, table);
+            }
+        }
+
         return null;
    }
 
@@ -205,14 +214,6 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
     *       | Identifier()
     */
    public String visit(Type n, Void argu) throws Exception {
-      return n.f0.accept(this, argu);
-   }
-
-   /**
-    * f0 -> BooleanArrayType()
-    *       | IntegerArrayType()
-    */
-   public String visit(ArrayType n, Void argu) throws Exception {
       return n.f0.accept(this, argu);
    }
 

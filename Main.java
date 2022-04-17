@@ -24,12 +24,10 @@ public class Main {
             DeclCollector declCollector = new DeclCollector(table);
             root.accept(declCollector, null);
 
-            table.printTable();
+            TypeChecker typeChecker = new TypeChecker(table);
+            root.accept(typeChecker, null);
 
-            // TypeChecker typeChecker = new TypeChecker(table);
-            // root.accept(typeChecker, null);
-
-            // table.printData();
+            // table.printTable();
         }
         catch (ParseException ex) {
             System.out.println(ex.getMessage());

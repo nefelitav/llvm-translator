@@ -66,7 +66,12 @@ public class Class {
         Method method = new Method(methodName, methodType, methodParams);                // create Method
         this.methods.put(methodName, method);                          // link this variable to this class
         if (this.extending != null && this.extending.methods.get(methodName) != null) {
-            ; // overriding, do nothing
+            if (this.extending.methods.get(methodName).returnType != methodType) {
+                throw new Exception("Method cant have different return type from the parent one.");
+            }
+            if (!(this.extending.methods.get(methodName).parameters).equals(method.parameters)) {
+                throw new Exception("Method cant have different parameters.");
+            }
         } else {
             this.methodOffset = this.methodOffset + this.methodOffsetNext; // increment to get current method's position
             method.offset = this.methodOffset;                       
