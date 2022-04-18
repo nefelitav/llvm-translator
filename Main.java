@@ -24,8 +24,8 @@ public class Main {
             DeclCollector declCollector = new DeclCollector(table);
             root.accept(declCollector, null);
 
-            TypeChecker typeChecker = new TypeChecker(table);
-            root.accept(typeChecker, null);
+            // TypeChecker typeChecker = new TypeChecker(table);
+            // root.accept(typeChecker, null);
 
             table.printTable();
         }

@@ -1,25 +1,17 @@
 package src;
-import java.util.TreeMap;
+import java.util.LinkedHashMap;
 
 public class Class {
     public String name;
-    TreeMap<String, Method> methods;
-    TreeMap<String, Variable> fields;
+    LinkedHashMap<String, Method> methods;
+    LinkedHashMap<String, Variable> fields;
     public Class extending;
-    public Integer fieldOffset;
-    public Integer methodOffset;
-    public Integer fieldOffsetNext;
-    public Integer methodOffsetNext;
 
     public Class(String name) {
         this.name = name;
         this.extending = null;
-        this.methods = new TreeMap<String, Method>();
-        this.fields = new TreeMap<String, Variable>();
-        this.fieldOffset = 0;
-        this.methodOffset = 0;
-        this.fieldOffsetNext = 0;
-        this.methodOffsetNext = 0;
+        this.methods = new LinkedHashMap<String, Method>();
+        this.fields = new LinkedHashMap<String, Variable>();
     }
 
     public void addField(String fieldType, String fieldName, SymbolTable table) throws Exception {
@@ -47,11 +39,15 @@ public class Class {
                     throw new Exception("Not a valid type");
                 }
         }
+        if (fieldName.equals("b")) {
+            System.out.println(fieldType + " " + fieldName + " " + table.fieldOffset + " " + table.fieldOffsetNext + " " + offset);
+        }
+
         Variable field = new Variable(fieldName, fieldType);            // create variable
         this.fields.put(fieldName, field);                          // link this variable to this class
-        this.fieldOffset = this.fieldOffset + this.fieldOffsetNext; // increment to get current field's position
-        field.offset = this.fieldOffset;                       
-        this.fieldOffsetNext = offset;                              // next field's position
+        table.fieldOffset = table.fieldOffset + table.fieldOffsetNext; // increment to get current field's position
+        field.offset = table.fieldOffset;                       
+        table.fieldOffsetNext = offset;                              // next field's position
     }
 
     public void addMethod(String methodType, String methodName, String methodParams, SymbolTable table) throws Exception {
@@ -64,18 +60,18 @@ public class Class {
             throw new Exception("Not a valid type");
         }
         Method method = new Method(methodName, methodType, methodParams);                // create Method
-        this.methods.put(methodName, method);                          // link this variable to this class
+        this.methods.put(methodName, method);                          // link this method to this class
         if (this.extending != null && this.extending.methods.get(methodName) != null) {
-            if (this.extending.methods.get(methodName).returnType != methodType) {
+            if (!methodType.equals(this.extending.methods.get(methodName).returnType)) {
                 throw new Exception("Method cant have different return type from the parent one.");
             }
             if (!(this.extending.methods.get(methodName).parameters).equals(method.parameters)) {
                 throw new Exception("Method cant have different parameters.");
             }
         } else {
-            this.methodOffset = this.methodOffset + this.methodOffsetNext; // increment to get current method's position
-            method.offset = this.methodOffset;                       
-            this.methodOffsetNext = offset;                              // next method's position
+            table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
+            method.offset = table.methodOffset;                       
+            table.methodOffsetNext = offset;                              // next method's position
         }
     }
 }

@@ -37,7 +37,6 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
       String className = n.f1.accept(this, argu);
       Class newClass = new Class(className);
       this.table.addClass(className, newClass);
-      System.out.println("MainClass");
       return null;
    }
 
@@ -56,7 +55,6 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
       }
       Class newClass = new Class(className);
       this.table.addClass(className, newClass);
-      System.out.println("ClassDeclaration");
 
       for (int i = 0; i < n.f3.size(); i++) {
         String field = n.f3.elementAt(i).accept(this, argu);
@@ -105,7 +103,6 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
         Class newClass = new Class(className);
         newClass.extending = parentClass;
         this.table.addClass(className, newClass);
-        System.out.println("ClassExtendsDeclaration");
 
         for (int i = 0; i < n.f5.size(); i++) {
             String field = n.f5.elementAt(i).accept(this, argu);

@@ -589,6 +589,7 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
         } else if (this.table.getClass(expr).methods.get(method) != null) {
             return this.table.getClass(expr).methods.get(method).returnType;
         }
+        return null;
    }
 
    /**
@@ -598,6 +599,7 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
    public String visit(ExpressionList n, Object argu) throws Exception {
        n.f0.accept(this, argu);
        n.f1.accept(this, argu);
+       return null;
    }
 
    /**
