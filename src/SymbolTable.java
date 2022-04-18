@@ -32,24 +32,22 @@ public class SymbolTable {
             if (i != 0) {
                 System.out.println("------ Class " + className + " ------");
                 System.out.println("--- Variables ---");
-            }
-            for (Map.Entry<String, Variable> field : classInstance.fields.entrySet()) {
-                String fieldName = field.getKey();
-                Variable fieldInstance = field.getValue();
-                Integer fieldOffset = fieldInstance.offset;
-                System.out.println(className + "." + fieldName + " : " + fieldOffset);
-            }
-            if (i != 0) {
+                for (Map.Entry<String, Variable> field : classInstance.fields.entrySet()) {
+                    String fieldName = field.getKey();
+                    Variable fieldInstance = field.getValue();
+                    Integer fieldOffset = fieldInstance.offset;
+                    System.out.println(className + "." + fieldName + " : " + fieldOffset);
+                }
                 System.out.println("--- Methods ---");
-            }
-            for (Map.Entry<String, Method> method : classInstance.methods.entrySet()) {
-                String methodName = method.getKey();
-                Method methodInstance = method.getValue();
-                if (classInstance.extending != null && classInstance.extending.methods.get(methodName) != null) {
-                    continue;
-                } 
-                Integer methodOffset = methodInstance.offset;
-                System.out.println(className + "." + methodName + " : " + methodOffset);
+                for (Map.Entry<String, Method> method : classInstance.methods.entrySet()) {
+                    String methodName = method.getKey();
+                    Method methodInstance = method.getValue();
+                    if (classInstance.extending != null && classInstance.extending.methods.get(methodName) != null) {
+                        continue;
+                    } 
+                    Integer methodOffset = methodInstance.offset;
+                    System.out.println(className + "." + methodName + " : " + methodOffset);
+                }
             }
             i = i + 1;
         }

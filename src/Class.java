@@ -1,5 +1,5 @@
 package src;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 public class Class {
     public String name;
@@ -39,9 +39,6 @@ public class Class {
                     throw new Exception("Not a valid type");
                 }
         }
-        if (fieldName.equals("b")) {
-            System.out.println(fieldType + " " + fieldName + " " + table.fieldOffset + " " + table.fieldOffsetNext + " " + offset);
-        }
 
         Variable field = new Variable(fieldName, fieldType);            // create variable
         this.fields.put(fieldName, field);                          // link this variable to this class
@@ -50,24 +47,41 @@ public class Class {
         table.fieldOffsetNext = offset;                              // next field's position
     }
 
-    public void addMethod(String methodType, String methodName, String methodParams, SymbolTable table) throws Exception {
+    public void addMethod(String methodType, String methodName, String methodParams, String methodVars, SymbolTable table) throws Exception {
+        
         if (this.methods.get(methodName) != null) {
             throw new Exception("Method is already declared");
         }
         Integer offset = 8;
 
         if (!methodType.equals("int") && !methodType.equals("boolean") && !methodType.equals("int[]") && !methodType.equals("boolean[]") && table.getClass(methodType) == null && !methodType.equals(this.name)) {
-            throw new Exception("Not a valid type");
+            if (!(methodType.equals("void") && methodName.equals("main")))
+            {
+                throw new Exception("Not a valid type");
+            }
         }
-        Method method = new Method(methodName, methodType, methodParams);                // create Method
+        Method method = new Method(methodName, methodType, methodParams, methodVars);                // create Method
         this.methods.put(methodName, method);                          // link this method to this class
+        if (methodName.equals("main")) {
+            return;
+        }
         if (this.extending != null && this.extending.methods.get(methodName) != null) {
             if (!methodType.equals(this.extending.methods.get(methodName).returnType)) {
                 throw new Exception("Method cant have different return type from the parent one.");
             }
-            if (!(this.extending.methods.get(methodName).parameters).equals(method.parameters)) {
-                throw new Exception("Method cant have different parameters.");
+
+            for (Map.Entry<String, Variable> entry : (this.extending.methods.get(methodName).parameters).entrySet()) {
+                String key = entry.getKey();
+                Variable value = entry.getValue();
+                for (Map.Entry<String, Variable> entry2 : (method.parameters).entrySet()) {
+                    String key2 = entry2.getKey();
+                    Variable value2 = entry2.getValue();
+                    if (!((value.type).equals(value2.type))) {
+                        throw new Exception("Method cant have different parameters from the parent one.");
+                    }
+                }
             }
+  
         } else {
             table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
             method.offset = table.methodOffset;                       

@@ -16,83 +16,17 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     }
 
     public String isVar(String possibleVar, Class currClass) throws Exception {
-        if (currClass.fields.get(possibleVar) != null) {
-            return currClass.fields.get(possibleVar).type;
+        if (this.currMethod.variables.get(possibleVar) != null) { // first check if local variable, then field
+            return this.currMethod.variables.get(possibleVar).type;
         } else if (this.currMethod.parameters.get(possibleVar) != null) {
             return this.currMethod.parameters.get(possibleVar).type;
-        } else if (this.currMethod.variables.get(possibleVar) != null) {
-            return this.currMethod.variables.get(possibleVar).type;
-        }
+        } else if (currClass.fields.get(possibleVar) != null) {
+            return currClass.fields.get(possibleVar).type;
+        } 
         throw new Exception("No such variable");
     }
 
-   /**
-    * f0 -> "class"
-    * f1 -> Identifier()
-    * f2 -> "{"
-    * f3 -> "public"
-    * f4 -> "static"
-    * f5 -> "void"
-    * f6 -> "main"
-    * f7 -> "("
-    * f8 -> "String"
-    * f9 -> "["
-    * f10 -> "]"
-    * f11 -> Identifier()
-    * f12 -> ")"
-    * f13 -> "{"
-    * f14 -> ( VarDeclaration() )*
-    * f15 -> ( Statement() )*
-    * f16 -> "}"
-    * f17 -> "}"
-    */
-    public String visit(MainClass n, Object argu) throws Exception {
-        super.visit(n, argu);
-        return null;
-    }
 
-   /**
-    * f0 -> "class"
-    * f1 -> Identifier()
-    * f2 -> "{"
-    * f3 -> ( VarDeclaration() )*
-    * f4 -> ( MethodDeclaration() )*
-    * f5 -> "}"
-    */
-    public String visit(ClassDeclaration n, Object argu) throws Exception {
-        String className = n.f1.accept(this, argu);
-        Class classInstance = this.table.getClass(className);
-        for (int i = 0; i < n.f3.size(); i++) {
-            String field = n.f3.elementAt(i).accept(this, classInstance);
-        }
-        for (int i = 0; i < n.f4.size(); i++) {
-            String method = n.f4.elementAt(i).accept(this, classInstance);
-        }
-        super.visit(n, argu);
-        return null;
-    }
-
-   /**
-    * f0 -> "class"
-    * f1 -> Identifier()
-    * f2 -> "extends"
-    * f3 -> Identifier()
-    * f4 -> "{"
-    * f5 -> ( VarDeclaration() )*
-    * f6 -> ( MethodDeclaration() )*
-    * f7 -> "}"
-    */
-    public String visit(ClassExtendsDeclaration n, Object argu) throws Exception {
-        String parent = n.f3.accept(this, argu);
-        String className = n.f1.accept(this, argu);
-        for (int i = 0; i < n.f5.size(); i++) {
-            String field = n.f5.elementAt(i).accept(this, className);
-        }
-        for (int i = 0; i < n.f6.size(); i++) {
-            String method = n.f6.elementAt(i).accept(this, className);
-        }
-        return null;
-    }
 
    /**
     * f0 -> Type()
@@ -329,7 +263,7 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     */
    public String visit(PrintStatement n, Class argu) throws Exception {
        String expr = n.f2.accept(this, argu);
-       if (expr == "int" || expr == "boolean") {
+        if (expr == "int" || expr == "boolean") {
             return expr;
         }
         String type = isVar(expr, argu);
@@ -707,13 +641,9 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
         if (expr == "int" || expr == "boolean" || expr == "int[]" || expr == "boolean[]" ) {
             return expr;
         }
-        String type = isVar(expr, argu);
-        if (type != "int" && type != "boolean" && type != "int" && type != "boolean[]") {
-            throw new Exception("No such object");
-        }
-        if (this.table.getClass(expr) != null) {
+        if (this.table.getClass(expr) != null) {    
             return this.table.getClass(expr).name;
         } 
-        return expr;
+        return isVar(expr, argu);
    }
 }

@@ -37,6 +37,22 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
       String className = n.f1.accept(this, argu);
       Class newClass = new Class(className);
       this.table.addClass(className, newClass);
+      String methodType = "void";
+      String methodName = "main";
+      String methodParam = "String[] " + n.f11.accept(this, argu);
+      String methodVars = "";
+
+      for (int i = 0; i < n.f14.size(); i++) {
+        String method = n.f14.elementAt(i).accept(this, argu);
+        if (method != null) {
+            if (i == 0) {
+                methodVars =  method;
+            } else {
+                methodVars = methodVars + "," + method;
+            }
+        }
+      }
+      newClass.addMethod(methodType, methodName, methodParam, methodVars, table);
       return null;
    }
 
@@ -61,7 +77,6 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
         if (field != null) {
             String fieldType = field.split(" ")[0];
             String fieldName = field.split(" ")[1];
-
             newClass.addField(fieldType, fieldName, table);
         }
       }
@@ -73,8 +88,11 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
             String methodType = methodNameType.split(" ")[0];
             String methodName = methodNameType.split(" ")[1];
             String methodParams = method.split(":")[1];
-            
-            newClass.addMethod(methodType, methodName, methodParams, table);
+            String methodVars = "";
+            if (method.split(":").length == 3) {
+                methodVars = method.split(":")[2];
+            } 
+            newClass.addMethod(methodType, methodName, methodParams, methodVars, table);
         }
       }
       return null;
@@ -121,8 +139,12 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
                 String methodType = methodNameType.split(" ")[0];
                 String methodName = methodNameType.split(" ")[1];
                 String methodParams = method.split(":")[1];
+                String methodVars = "";
+                if (method.split(":").length == 3) {
+                    methodVars = method.split(":")[2];
+                } 
                 
-                newClass.addMethod(methodType, methodName, methodParams, table);
+                newClass.addMethod(methodType, methodName, methodParams, methodVars, table);
             }
         }
 
@@ -159,7 +181,20 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
         String methodType = n.f1.accept(this, argu);
         String methodName = n.f2.accept(this, argu);
         String methodParams = n.f4.accept(this, argu);
-        return methodType + " " + methodName + ":" + methodParams;
+        String methodVars = "";
+
+        for (int i = 0; i < n.f7.size(); i++) {
+            String method = n.f7.elementAt(i).accept(this, argu);
+            if (method != null) {
+                if (i == 0) {
+                    methodVars =  method;
+                } else {
+                    methodVars = methodVars + "," + method;
+                }
+            }
+        }
+
+        return methodType + " " + methodName + ":" + methodParams + ":" + methodVars;
    }
 
 
