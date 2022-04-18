@@ -15,6 +15,18 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
         this.currMethod = null;
     }
 
+    public isVar(String possibleVar, Class currClass) {
+        if (currClass.fields.get(possibleVar)) {
+            return currClass.fields.get(possibleVar).type;
+        } else if (this.currMethod.parameters.get(possibleVar)) {
+            return this.currMethod.parameters.get(possibleVar).type;
+        } else if (this.currMethod.variables.get(possibleVar)) {
+            return this.currMethod.variables.get(possibleVar).type;
+        }
+        throw new Exception("No such variable");
+        return null;
+    }
+
    /**
     * f0 -> "class"
     * f1 -> Identifier()
@@ -109,11 +121,12 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f11 -> ";"
     * f12 -> "}"
     */
-   public String visit(MethodDeclaration n, Object argu) throws Exception {
+   public String visit(MethodDeclaration n, Class argu) throws Exception {
         String methodType = n.f1.accept(this, argu);
         String methodName = n.f2.accept(this, argu);
         String methodParams = n.f4.accept(this, argu);
         String returnType = n.f10.accept(this, argu);
+        this.currMethod = argu.methods.get(methodName);
         if (returnType != argu.methods.get(methodName).returnType) {
             throw new Exception("Return type is different from Method type");
         }
@@ -286,10 +299,24 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
    public String visit(AndExpression n, Object argu) throws Exception {
         String first = n.f0.accept(this, argu);
         String second = n.f2.accept(this, argu);
-        if (first == second == "boolean") {
-            return "boolean";
+        if (first == "boolean") {
+            if (second == "boolean") {
+                return "boolean";
+            } else {
+                String type2 = isVar(second, argu)
+                if (type2 == "boolean") {
+                    return "boolean";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
+                }
+            }
         } else {
-            throw new Exception("Cannot use logical operators on non boolean data");
+            String type = isVar(first, argu)
+            if (type == "boolean") {
+                return "boolean";
+            } else {
+                throw new Exception("Cannot use logical operators on non boolean data");
+            }
         }
    }
 
@@ -298,16 +325,26 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f1 -> "<"
     * f2 -> PrimaryExpression()
     */
-   public String visit(CompareExpression n, Object argu) throws Exception {
+   public String visit(CompareExpression n, Class argu) throws Exception {
         String first = n.f0.accept(this, argu);
         String second = n.f2.accept(this, argu);
-        if (first == second == "int") {
-            return "int";
-        } else {
-            if (argu.fields.get(expr).type != "int") {
-                if (currMethod.variables.get(expr).type != "int") {
-                    throw new Exception("Cannot use comparison operators on non integers");
+        if (first == "int") {
+            if (second == "int") {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu)
+                if (type2 == "int") {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
                 }
+            }
+        } else {
+            String type = isVar(first, argu)
+            if (type == "int") {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
             }
         }
    }
@@ -317,16 +354,26 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f1 -> "+"
     * f2 -> PrimaryExpression()
     */
-   public String visit(PlusExpression n, Object argu) throws Exception {
+   public String visit(PlusExpression n, Class argu) throws Exception {
         String first = n.f0.accept(this, argu);
         String second = n.f2.accept(this, argu);
-        if (first == second == "int") {
-            return "int";
-        } else {
-            if (argu.fields.get(expr).type != "int") {
-                if (currMethod.variables.get(expr).type != "int") {
-                    throw new Exception("Cannot use arithmetic operators on non integers");
+        if (first == "int") {
+            if (second == "int") {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu)
+                if (type2 == "int") {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
                 }
+            }
+        } else {
+            String type = isVar(first, argu)
+            if (type == "int") {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
             }
         }
    }
@@ -336,16 +383,26 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f1 -> "-"
     * f2 -> PrimaryExpression()
     */
-   public String visit(MinusExpression n, Object argu) throws Exception {
+   public String visit(MinusExpression n, Class argu) throws Exception {
         String first = n.f0.accept(this, argu);
         String second = n.f2.accept(this, argu);
-        if (first == second == "int") {
-            return "int";
-        } else {
-            if (argu.fields.get(expr).type != "int") {
-                if (currMethod.variables.get(expr).type != "int") {
-                    throw new Exception("Cannot use arithmetic operators on non integers");
+        if (first == "int") {
+            if (second == "int") {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu)
+                if (type2 == "int") {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
                 }
+            }
+        } else {
+            String type = isVar(first, argu)
+            if (type == "int") {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
             }
         }
    }
@@ -355,16 +412,26 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f1 -> "*"
     * f2 -> PrimaryExpression()
     */
-   public String visit(TimesExpression n, Object argu) throws Exception {
+   public String visit(TimesExpression n, Class argu) throws Exception {
         String first = n.f0.accept(this, argu);
         String second = n.f2.accept(this, argu);
-        if (first == second == "int") {
-            return "int";
-        } else {
-            if (argu.fields.get(expr).type != "int") {
-                if (currMethod.variables.get(expr).type != "int") {
-                    throw new Exception("Cannot use arithmetic operators on non integers");
+        if (first == "int") {
+            if (second == "int") {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu)
+                if (type2 == "int") {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use arithmetic operators on non integer data");
                 }
+            }
+        } else {
+            String type = isVar(first, argu)
+            if (type == "int") {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
             }
         }
    }
@@ -375,47 +442,61 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f2 -> PrimaryExpression()
     * f3 -> "]"
     */
-   public String visit(ArrayLookup n, Object argu) throws Exception {
+   public String visit(ArrayLookup n, Class argu) throws Exception {
        String expr = n.f0.accept(this, argu);
-       String type = "";
-        if (expr != "int[]") {
-            if (argu.fields.get(expr).type != "int[]") {
-                if (currMethod.variables.get(expr).type != "int[]") {
-                    throw new Exception("Cannot index a non array object");
+       String expr2 = n.f2.accept(this, argu);
+       if (expr == "int[]") {
+           if (expr2 == "int") {
+               return "int";
+           } else {
+               String type2 = isVar(expr2, argu);
+               if (type2 == "int") {
+                   return "int";
+               } else {
+                    throw new Exception("Index should be integer");
+               }
+           }
+       } else if (expr == "boolean[]") {
+           if (expr2 == "int") {
+               return "boolean";
+           } else {
+               String type2 = isVar(expr2, argu);
+               if (type2 == "int") {
+                   return "boolean";
+               } else {
+                    throw new Exception("Index should be integer");
+               }
+           }
+       } else {
+           String type = isVar(expr, argu)
+            if (type == "int[]") {
+               if (expr2 == "int") {
+                    return "int";
+                } else {
+                    String type2 = isVar(expr2, argu);
+                    if (type2 == "int") {
+                        return "int";
+                    } else {
+                            throw new Exception("Index should be integer");
+                    }
+                }
+            } else if (type == "boolean[]") {
+               if (expr2 == "int") {
+                    return "boolean";
+                } else {
+                    String type2 = isVar(expr2, argu);
+                    if (type2 == "int") {
+                        return "int";
+                    } else {
+                            throw new Exception("Index should be integer");
+                    }
                 }
             } else {
-                type = "int";
+                throw new Exception("Cannot index a non array object");
             }
-        } else {
-            type = "int";
-        }
-
-        if (expr != "boolean[]") {
-            if (argu.fields.get(expr).type != "boolean[]") {
-                if (currMethod.variables.get(expr).type != "boolean[]") {
-                    throw new Exception("Cannot index a non array object");
-                }
-            } else {
-                type = "boolean";
-            }
-        } else {
-            type = "boolean";
-        }
+       }
 
 
-        String expr2 = n.f2.accept(this, argu);
-        if (expr2 != "int") {
-            if (argu.fields.get(expr).type != "int") {
-                if (currMethod.variables.get(expr).type != "int") {
-                    throw new Exception("Cannot index an array with a non integer");
-                }
-            }
-        }
-
-
-
-
-        return type;
    }
 
    /**
@@ -423,13 +504,12 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f1 -> "."
     * f2 -> "length"
     */
-   public String visit(ArrayLength n, Object argu) throws Exception {
+   public String visit(ArrayLength n, Class argu) throws Exception {
         String expr = n.f0.accept(this, argu);
         if (expr != "int[]" && expr != "boolean[]") {
-            if (argu.fields.get(expr).type != "int[]" && argu.fields.get(expr).type != "boolean[]" ) {
-                if (currMethod.variables.get(expr).type != "int[]" && currMethod.variables.get(expr).type != "boolean[]") {
-                    throw new Exception("Cannot find the length of a non array object");
-                }
+            String type = isVar(expr, argu);
+            if (type != "int[]" && type != "boolean[]") {
+                throw new Exception("Cannot find the length of a non array object");
             }
         }
         return "int";
@@ -443,7 +523,24 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
 //     * f4 -> ( ExpressionList() )?
 //     * f5 -> ")"
 //     */
-//    public String visit(MessageSend n, Object argu) throws Exception {
+//    public String visit(MessageSend n, Class argu) throws Exception {
+//        // check args
+//         String expr = n.f0.accept(this, argu);
+//         String method = n.f2.accept(this, argu);
+//         String args = n.f4.accept(this, argu);
+//         if (expr == "this") {
+//             if (argu.methods.get(method) == null) {
+//                 throw new Exception("No such class method");
+//             } else {
+//                 return argu.methods.get(method).returnType;
+//             }
+//         } else if (this.table.getClass(expr) == null) {
+//             throw new Exception("No such class");
+//         } else if (this.table.getClass(expr).methods.get(method) == null) {
+//             throw new Exception("No such class method");
+//         } else if (this.table.getClass(expr).methods.get(method) != null) {
+//             return this.table.getClass(expr).methods.get(method).returnType;
+//         }
 //    }
 
 //    /**
@@ -455,20 +552,20 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
 //        n.f1.accept(this, argu);
 //    }
 
-   /**
-    * f0 -> ( ExpressionTerm() )*
-    */
-   public String visit(ExpressionTail n, Object argu) throws Exception {
-      return n.f0.accept(this, argu);
-   }
+//    /**
+//     * f0 -> ( ExpressionTerm() )*
+//     */
+//    public String visit(ExpressionTail n, Object argu) throws Exception {
+//       return n.f0.accept(this, argu);
+//    }
 
-   /**
-    * f0 -> ","
-    * f1 -> Expression()
-    */
-   public String visit(ExpressionTerm n, Object argu) throws Exception {
-       return n.f1.accept(this, argu);
-   }
+//    /**
+//     * f0 -> ","
+//     * f1 -> Expression()
+//     */
+//    public String visit(ExpressionTerm n, Object argu) throws Exception {
+//        return n.f1.accept(this, argu);
+//    }
 
 
    /**
@@ -532,6 +629,7 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
     * f0 -> "!"
     * f1 -> Clause()
     */
+    // type or identifier
    public String visit(NotExpression n, Object argu) throws Exception {
         String clause = n.f1.accept(this, argu);
         if (clause == "boolean") {
@@ -542,12 +640,27 @@ public class TypeChecker extends GJDepthFirst<String, Object> {
    
    }
 
+    /**
+    * f0 -> "this"
+    */
+   public String visit(ThisExpression n, Class argu) throws Exception {
+      return argu.name;
+   }
+
    /**
     * f0 -> "("
     * f1 -> Expression()
     * f2 -> ")"
     */
-   public String visit(BracketExpression n, Object argu) throws Exception {
-       return n.f1.accept(this, argu);
+   public String visit(BracketExpression n, Class argu) throws Exception {
+        String expr = n.f1.accept(this, argu);
+        if (expr == "int" || expr == "boolean" || expr == "int[]" || expr == "boolean[]" ) {
+            return expr;
+        }
+        String type = isVar(expr, argu);
+        if (type != "int" && type != "boolean" && type != "int" && type != "boolean[]") {
+            throw new Exception("No such object");
+        }
+        return expr;
    }
 }

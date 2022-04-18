@@ -27,7 +27,7 @@ public class Main {
             TypeChecker typeChecker = new TypeChecker(table);
             root.accept(typeChecker, null);
 
-            // table.printTable();
+            table.printTable();
         }
         catch (ParseException ex) {
             System.out.println(ex.getMessage());
