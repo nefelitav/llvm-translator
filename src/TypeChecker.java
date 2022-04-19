@@ -4,7 +4,7 @@ import visitor.GJDepthFirst;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.*;
 
 public class TypeChecker extends GJDepthFirst<String, Class> {
     SymbolTable table;
@@ -32,28 +32,77 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
             return currClass.fields.get(possibleVar).type;
         } 
         if (currClass.extending != null) {
-            if (currClass.extending.fields.get(possibleVar) != null) {
-                return currClass.extending.fields.get(possibleVar).type;
+            Class temp = currClass.extending;
+            while(temp != null) {
+                if (temp.fields.get(possibleVar) != null) {
+                    return temp.fields.get(possibleVar).type;
+                }
+                temp = temp.extending;
             }
         }
         throw new Exception("No such variable " + possibleVar + " in class " + currClass.name + " in method " + this.currMethod.name);
     }
 
-    // public String checkArgs(String args, Method method, Class currClass) throws Exception {
-    //     if (!args.equals("null") && !args.isEmpty()) {
-    //         Iterator arg=(args.split(",")).iterator();
-    //         Iterator param=(method.parameters.entrySet()).iterator();
+    public String checkArgs(String args, Method method, Class currClass) throws Exception {
+        System.out.println("-----------");
 
-    //         while (arg.hasNext() && param.hasNext()) {
-    //             String paramType = param.getValue().type;
-    //             String argType = isVar(arg, currClass);
-    //             if (!argType.equals(paramType)) {
-    //                 throw new Exception("Argument types do not match parameters types");
-    //             }
-    //         }
-    //     } 
-    //     return null;
-    // }
+        String arguments = "";
+        int i = 0;
+        if (args != null && !args.isEmpty()) {
+            for (String arg : args.split(",")) {
+                if (i == 0) {
+                    if (!arg.equals("int") && !arg.equals("boolean") && !arg.equals("int[]") && !arg.equals("boolean[]")) {
+                        if (this.table.getClass(arg) == null) {
+                            arguments = isVar(arg, currClass);
+                        } else {
+                            arguments = arg;
+                        }
+                    } else {
+                        arguments = arg;
+                    }
+                } else {
+
+                    if (!arg.equals("int") && !arg.equals("boolean") && !arg.equals("int[]") && !arg.equals("boolean[]")) {
+                        if (this.table.getClass(arg) == null) {
+                            arguments = arguments + "," + isVar(arg, currClass);
+                        } else {
+                            arguments = arguments + "," + arg;
+                        }
+                    } else {
+                        arguments = arguments + "," + arg;
+                    }
+
+                }
+                i = i + 1; 
+            }
+        }
+
+        String formalParams = "";
+        i = 0;
+        for (Map.Entry<String, Variable> entry : (method.parameters).entrySet()) {
+            String var = entry.getValue().type;
+            if (i == 0) {
+                formalParams = var;
+            } else {
+                formalParams = formalParams + "," + var;
+            }
+            i = i + 1;
+        }
+
+        if ((arguments == "null" || arguments.isEmpty()) && (formalParams == "null" || formalParams.isEmpty())) {
+            return null;
+        }
+        System.out.println(arguments);
+        System.out.println(formalParams);
+
+        if (!formalParams.equals(arguments)) {
+            throw new Exception("Formal parameters do not match with arguments");
+        }
+
+        System.out.println("-----------");
+
+        return null;
+    }
 
     /**
     * f0 -> "class"
@@ -189,6 +238,11 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
                 throw new Exception("Return type is different from Method type");
             }
         }
+        if (this.table.getClass(returnType) != null) {
+            if (!returnType.equals(argu.methods.get(methodName).returnType)) {
+                throw new Exception("Return type is different from Method type");
+            }
+        }
         if (!returnType.equals(argu.methods.get(methodName).returnType) && !(isVar(returnType, argu)).equals(argu.methods.get(methodName).returnType)) {
             throw new Exception("Return type is different from Method type");
         }
@@ -300,17 +354,35 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
         }
 
         if (this.table.getClass(expr) != null) {
-            System.out.println(identifier + "=" + expr);
-            System.out.println(this.table.getClass(expr).name);
-            if (isVar(identifier, argu).equals(this.table.getClass(expr).name)) {
+            if (isVar(identifier, argu).equals(this.table.getClass(expr).name)) { // same class type
                 return null;
+            }
+            Class temp = this.table.getClass(expr).extending;
+            while (temp != null) {
+                if (temp.equals(isVar(identifier, argu))) { // parent and child
+                    return null;
+                }
+                temp = temp.extending;
             }
         }
 
         
         String identifierType = isVar(identifier, argu);
+        Class temp = null;
+        if (this.table.getClass(expr) != null) {
+            temp = this.table.getClass(expr).extending;
+        }
+
         if (identifierType.equals(expr)) {
             return null;
+        } else if (temp != null) {
+            while (temp != null) {
+                if (identifierType.equals(temp.name)) { // parent has this method
+                    return null;
+                }
+                temp = temp.extending;
+            }
+            throw new Exception("Cannot assign to a variable of different type");
         } else {
             String exprType = isVar(expr, argu);
             if (identifierType.equals(exprType)) {
@@ -670,9 +742,19 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
         if (this.table.getClass(expr) == null) { // not a class name but a class identifier
             if (this.table.getClass(isVar(expr, argu)) != null) {   // get corresponding class
                 if (this.table.getClass(isVar(expr, argu)).methods.get(method) == null) {
+                    Class temp = this.table.getClass(isVar(expr, argu));
+                    while (temp != null) {
+                        System.out.println("hey");
+                        if (temp.methods.get(method) != null) { // parent has this method
+                            checkArgs(args, temp.methods.get(method), argu);
+                            return temp.methods.get(method).returnType;
+                        }
+                        temp = temp.extending;
+                    }
                     throw new Exception("No such class method");
+                    
                 } else if (this.table.getClass(isVar(expr, argu)).methods.get(method) != null) { 
-                    // checkArgs(args, this.table.getClass(isVar(expr, argu)).methods.get(method), argu);
+                    checkArgs(args, this.table.getClass(isVar(expr, argu)).methods.get(method), argu);
                     return this.table.getClass(isVar(expr, argu)).methods.get(method).returnType;
                 }
             }
@@ -680,7 +762,7 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
         } else if (this.table.getClass(expr).methods.get(method) == null) {
             throw new Exception("No such class method");
         } else if (this.table.getClass(expr).methods.get(method) != null) { // found a class with this method 
-            // checkArgs(args, this.table.getClass(expr).methods.get(method), argu);
+            checkArgs(args, this.table.getClass(expr).methods.get(method), argu);
             return this.table.getClass(expr).methods.get(method).returnType;
 
         }
@@ -692,14 +774,19 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f1 -> ExpressionTail()
     */
    public String visit(ExpressionList n, Class argu) throws Exception {
-       return n.f0.accept(this, argu) + " " + n.f1.accept(this, argu);
+       return n.f0.accept(this, argu) + n.f1.accept(this, argu);
    }
 
    /**
     * f0 -> ( ExpressionTerm() )*
     */
    public String visit(ExpressionTail n, Class argu) throws Exception {
-      return n.f0.accept(this, argu);
+      String tail = "";
+        for (int i = 0; i < n.f0.size(); i++) {
+            String param = n.f0.elementAt(i).accept(this, argu);
+            tail = tail + param;
+        }
+        return tail;
    }
 
    /**
