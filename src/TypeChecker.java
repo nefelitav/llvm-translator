@@ -4,7 +4,7 @@ import visitor.GJDepthFirst;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Iterator;
 
 public class TypeChecker extends GJDepthFirst<String, Class> {
     SymbolTable table;
@@ -16,7 +16,7 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     }
 
     public void validType(String type) throws Exception {
-        if (type != "int" && type != "boolean" && type != "int[]" && type != "boolean[]") {
+        if (!type.equals("int") && !type.equals("boolean") && !type.equals("int[]") && !type.equals("boolean[]")) {
             if (this.table.getClass(type) == null) {
                 throw new Exception("Not a valid type: " + type);
             }
@@ -41,7 +41,10 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
 
     // public String checkArgs(String args, Method method, Class currClass) throws Exception {
     //     if (!args.equals("null") && !args.isEmpty()) {
-    //         for (String arg : args.split(",");Map.Entry<String, Variable> param : method.parameters.entrySet();) {
+    //         Iterator arg=(args.split(",")).iterator();
+    //         Iterator param=(method.parameters.entrySet()).iterator();
+
+    //         while (arg.hasNext() && param.hasNext()) {
     //             String paramType = param.getValue().type;
     //             String argType = isVar(arg, currClass);
     //             if (!argType.equals(paramType)) {
@@ -73,8 +76,10 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f17 -> "}"
     */
    public String visit(MainClass n, Class argu) throws Exception {
+        System.out.println("main");
         String className = n.f1.accept(this, argu);
         Class classInstance = this.table.getClass(className);
+        this.currMethod = classInstance.methods.get("main");
         n.f11.accept(this, classInstance);
         for (int i = 0; i < n.f14.size(); i++) {
           String field = n.f14.elementAt(i).accept(this, classInstance);
@@ -94,6 +99,7 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f5 -> "}"
     */
    public String visit(ClassDeclaration n, Class argu) throws Exception {
+      System.out.println("class");
       String className = n.f1.accept(this, argu);
       Class classInstance = this.table.getClass(className);
       for (int i = 0; i < n.f3.size(); i++) {
@@ -117,6 +123,8 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f7 -> "}"
     */
    public String visit(ClassExtendsDeclaration n, Class argu) throws Exception {
+       System.out.println("class extends");
+
         String parent = n.f3.accept(this, argu);
         String className = n.f1.accept(this, argu);
         Class classInstance = this.table.getClass(className);
@@ -136,6 +144,8 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f2 -> ";"
     */
    public String visit(VarDeclaration n, Class argu) throws Exception {
+       System.out.println("var");
+
         String fieldType = n.f0.accept(this, argu);
         validType(fieldType);
         String fieldName = n.f1.accept(this, argu);
@@ -158,16 +168,32 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f12 -> "}"
     */
    public String visit(MethodDeclaration n, Class argu) throws Exception {
+       System.out.println("method");
+
         String methodType = n.f1.accept(this, argu);
         validType(methodType);
         String methodName = n.f2.accept(this, argu);
         this.currMethod = argu.methods.get(methodName);
         String methodParams = n.f4.accept(this, argu);
+
+        for (int i = 0; i < n.f7.size(); i++) {
+            String method = n.f7.elementAt(i).accept(this, argu);
+        }
+        for (int i = 0; i < n.f8.size(); i++) {
+            String method = n.f8.elementAt(i).accept(this, argu);
+        }
         String returnType = n.f10.accept(this, argu);
-        // if (returnType != argu.methods.get(methodName).returnType && !(isVar(returnType, argu)).equals(argu.methods.get(methodName).returnType)) {
-        //     throw new Exception("Return type is different from Method type");
-        // }
-        return methodType + " " + methodName + ":" + methodParams;
+        System.out.println(returnType);
+        if (returnType.equals("int") || returnType.equals("boolean") || returnType.equals("int[]") || returnType.equals("boolean[]")) {
+            if (!returnType.equals(argu.methods.get(methodName).returnType)) {
+                throw new Exception("Return type is different from Method type");
+            }
+        }
+        if (!returnType.equals(argu.methods.get(methodName).returnType) && !(isVar(returnType, argu)).equals(argu.methods.get(methodName).returnType)) {
+            throw new Exception("Return type is different from Method type");
+        }
+
+        return null;
    }
     
    /**
@@ -175,9 +201,10 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
     * f1 -> FormalParameterTail()
     */
    public String visit(FormalParameterList n, Class argu) throws Exception {
+       System.out.println("params");
         String formalParam = n.f0.accept(this, argu);
         String formalParamTail = n.f1.accept(this, argu);
-        return formalParam + " " + formalParamTail;
+        return formalParam + formalParamTail;
    }
 
    /**
@@ -186,6 +213,7 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
    public String visit(FormalParameterTail n, Class argu) throws Exception {
       return n.f0.accept(this, argu);
    }
+
 
    /**
     * f0 -> ","
@@ -256,523 +284,554 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
         return n.f0.toString();
     }
 
-//    /**
-//     * f0 -> Identifier()
-//     * f1 -> "="
-//     * f2 -> Expression()
-//     * f3 -> ";"
-//     */
-//    public String visit(AssignmentStatement n, Class argu) throws Exception {
-//         String identifier = n.f0.accept(this, argu);
-//         String expr = n.f2.accept(this, argu);
-//         if (identifier == expr) {
-//             return null;
-//         }
-//         if (expr != "int") {
-//             if (expr != "boolean") {
-//                 String exprType = isVar(expr, argu);
-//                 if (exprType != "boolean" && exprType != "int") {
-//                     throw new Exception("Cannot assign an expression to a variable of different type");
-//                 } else {
-//                     String identifierType = isVar(identifier, argu);
-//                     if (identifierType != exprType) {
-//                         throw new Exception("Cannot assign an expression to a variable of different type");
-//                     } else {
-//                         return null;
-//                     }
-//                 }
+   /**
+    * f0 -> Identifier()
+    * f1 -> "="
+    * f2 -> Expression()
+    * f3 -> ";"
+    */
+   public String visit(AssignmentStatement n, Class argu) throws Exception {
+        System.out.println("assignment");
+        String identifier = n.f0.accept(this, argu);
+        String expr = n.f2.accept(this, argu);
 
-//             } else {
-//                 String identifierType = isVar(identifier, argu);
-//                 if (identifierType != "boolean") {
-//                     throw new Exception("Cannot assign an expression to a variable of different type");
-//                 } else {
-//                     return null;
-//                 }
-//             }
-//         } else {
-//             String identifierType = isVar(identifier, argu);
-//             if (identifierType != "int") {
-//                 throw new Exception("Cannot assign an expression to a variable of different type");
-//             } else {
-//                 return null;
-//             }
-//         }
-//    }
+        if (identifier.equals(expr)) {
+            return null;
+        }
 
-//    /**
-//     * f0 -> Identifier()
-//     * f1 -> "["
-//     * f2 -> Expression()
-//     * f3 -> "]"
-//     * f4 -> "="
-//     * f5 -> Expression()
-//     * f6 -> ";"
-//     */
-//    public String visit(ArrayAssignmentStatement n, Class argu) throws Exception {
-//         String identifier = n.f0.accept(this, argu);
-//         String expr = n.f2.accept(this, argu);
-//         String expr2 = n.f5.accept(this, argu);
+        if (this.table.getClass(expr) != null) {
+            System.out.println(identifier + "=" + expr);
+            System.out.println(this.table.getClass(expr).name);
+            if (isVar(identifier, argu).equals(this.table.getClass(expr).name)) {
+                return null;
+            }
+        }
 
-//         if (expr != "int" && isVar(expr, argu) != "int") {
-//             throw new Exception("Index should be integer");
-//         }
-//         String identifierType = isVar(identifier, argu);
-//         if (identifierType != "int[]" && identifierType != "boolean[]") {
-//             throw new Exception("Cannot index a non array Class");
-//         }
-//         String exprType = isVar(expr2, argu);
-//         if (exprType != identifierType.replaceAll("[^A-Za-z0-9]","")) {
-//             throw new Exception("Types don't match");
-//         }
-//         return null;
+        
+        String identifierType = isVar(identifier, argu);
+        if (identifierType.equals(expr)) {
+            return null;
+        } else {
+            String exprType = isVar(expr, argu);
+            if (identifierType.equals(exprType)) {
+                System.out.println(identifierType + "," + exprType);
+                return null;
+            } else {
+                throw new Exception("Cannot assign to a variable of different type");
+            }
+        }
+   }
 
-//    }
+   /**
+    * f0 -> Identifier()
+    * f1 -> "["
+    * f2 -> Expression()
+    * f3 -> "]"
+    * f4 -> "="
+    * f5 -> Expression()
+    * f6 -> ";"
+    */
+   public String visit(ArrayAssignmentStatement n, Class argu) throws Exception {
+       System.out.println("array assignment");
+        String identifier = n.f0.accept(this, argu);
+        String expr = n.f2.accept(this, argu);
+        String expr2 = n.f5.accept(this, argu);
+        System.out.println(identifier+"["+expr+"]="+expr2);
+        if (!expr.equals("int") && !isVar(expr, argu).equals("int")) {
+            throw new Exception("Index should be integer");
+        }
+        String identifierType = isVar(identifier, argu);
+        if (!identifierType.equals("int[]") && !identifierType.equals("boolean[]")) {
+            throw new Exception("Cannot index a non array Class");
+        }
+        if (identifierType.equals(expr2+"[]")) {
+            return null;
+        }
+        String exprType = isVar(expr2, argu);
+        if (!exprType.equals(identifierType.replaceAll("[^A-Za-z0-9]",""))) {
+            throw new Exception("Types don't match");
+        }
+        return null;
+   }
 
-//    /**
-//     * f0 -> "if"
-//     * f1 -> "("
-//     * f2 -> Expression()
-//     * f3 -> ")"
-//     * f4 -> Statement()
-//     * f5 -> "else"
-//     * f6 -> Statement()
-//     */
-//    public String visit(IfStatement n, Class argu) throws Exception {
-//         String expr = n.f2.accept(this, argu);
-//         if (expr != "boolean " && isVar(expr, argu) != "boolean") {
-//             throw new Exception("If statement requires a boolean");
-//         }
-//         String stmt = n.f4.accept(this, argu);
-//         String elseStmt = n.f6.accept(this, argu);
-//         return null;
-//    }
+   /**
+    * f0 -> "if"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    * f5 -> "else"
+    * f6 -> Statement()
+    */
+   public String visit(IfStatement n, Class argu) throws Exception {
+       System.out.println("if");
+        String expr = n.f2.accept(this, argu);
+        System.out.println(expr);
+        if (!expr.equals("boolean") && !isVar(expr, argu).equals("boolean")) {
+            throw new Exception("If statement requires a boolean");
+        }
+        String stmt = n.f4.accept(this, argu);
+        String elseStmt = n.f6.accept(this, argu);
+        return null;
+   }
 
-//    /**
-//     * f0 -> "while"
-//     * f1 -> "("
-//     * f2 -> Expression()
-//     * f3 -> ")"
-//     * f4 -> Statement()
-//     */
-//    public String visit(WhileStatement n, Class argu) throws Exception {
-//         String expr = n.f2.accept(this, argu);
-//         if (expr != "boolean " && isVar(expr, argu) != "boolean") {
-//             throw new Exception("While statement requires a boolean");
-//         }
-//         String stmt = n.f4.accept(this, argu);
-//         return null;
-//    }
+   /**
+    * f0 -> "while"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    */
+   public String visit(WhileStatement n, Class argu) throws Exception {
+       System.out.println("while");
 
-//    /**
-//     * f0 -> "System.out.println"
-//     * f1 -> "("
-//     * f2 -> Expression()
-//     * f3 -> ")"
-//     * f4 -> ";"
-//     */
-//    public String visit(PrintStatement n, Class argu) throws Exception {
-//        String expr = n.f2.accept(this, argu);
-//         if (expr == "int" || expr == "boolean") {
-//             return expr;
-//         }
-//         String type = isVar(expr, argu);
-//         if (type != "int" && type != "boolean") {
-//             throw new Exception("Cannot print this type of Class");
-//         }
-//         return type;
-//    }
+        String expr = n.f2.accept(this, argu);
+        if (!expr.equals("boolean") && !isVar(expr, argu).equals("boolean")) {
+            throw new Exception("While statement requires a boolean");
+        }
+        String stmt = n.f4.accept(this, argu);
+        return null;
+   }
 
-//    /**
-//     * f0 -> Clause()
-//     * f1 -> "&&"
-//     * f2 -> Clause()
-//     */
-//    public String visit(AndExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         if (first == "boolean") {
-//             if (second == "boolean") {
-//                 return "boolean";
-//             } else {
-//                 String type2 = isVar(second, argu);
-//                 if (type2 == "boolean") {
-//                     return "boolean";
-//                 } else {
-//                     throw new Exception("Cannot use logical operators on non boolean data");
-//                 }
-//             }
-//         } else {
-//             String type = isVar(first, argu);
-//             if (type == "boolean") {
-//                 return "boolean";
-//             } else {
-//                 throw new Exception("Cannot use logical operators on non boolean data");
-//             }
-//         }
-//    }
+   /**
+    * f0 -> "System.out.println"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> ";"
+    */
+   public String visit(PrintStatement n, Class argu) throws Exception {
+        System.out.println("print");
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "<"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(CompareExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         if (first == "int") {
-//             if (second == "int") {
-//                 return "int";
-//             } else {
-//                 String type2 = isVar(second, argu);
-//                 if (type2 == "int") {
-//                     return "int";
-//                 } else {
-//                     throw new Exception("Cannot use logical operators on non boolean data");
-//                 }
-//             }
-//         } else {
-//             String type = isVar(first, argu);
-//             if (type == "int") {
-//                 return "int";
-//             } else {
-//                 throw new Exception("Cannot use arithmetic operators on non integer data");
-//             }
-//         }
-//    }
+        String expr = n.f2.accept(this, argu);
+        if (expr.equals("int") || expr.equals("boolean")) {
+            return expr;
+        }
+        String type = isVar(expr, argu);
+        if (!type.equals("int") && !type.equals("boolean")) {
+            throw new Exception("Cannot print this type of data");
+        }
+        return type;
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "+"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(PlusExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         if (first == "int") {
-//             if (second == "int") {
-//                 return "int";
-//             } else {
-//                 String type2 = isVar(second, argu);
-//                 if (type2 == "int") {
-//                     return "int";
-//                 } else {
-//                     throw new Exception("Cannot use logical operators on non boolean data");
-//                 }
-//             }
-//         } else {
-//             String type = isVar(first, argu);
-//             if (type == "int") {
-//                 return "int";
-//             } else {
-//                 throw new Exception("Cannot use arithmetic operators on non integer data");
-//             }
-//         }
-//    }
+   /**
+    * f0 -> Clause()
+    * f1 -> "&&"
+    * f2 -> Clause()
+    */
+   public String visit(AndExpression n, Class argu) throws Exception {
+       System.out.println("and");
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "-"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(MinusExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         if (first == "int") {
-//             if (second == "int") {
-//                 return "int";
-//             } else {
-//                 String type2 = isVar(second, argu);
-//                 if (type2 == "int") {
-//                     return "int";
-//                 } else {
-//                     throw new Exception("Cannot use logical operators on non boolean data");
-//                 }
-//             }
-//         } else {
-//             String type = isVar(first, argu);
-//             if (type == "int") {
-//                 return "int";
-//             } else {
-//                 throw new Exception("Cannot use arithmetic operators on non integer data");
-//             }
-//         }
-//    }
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        if (first.equals("boolean")) {
+            if (second.equals("boolean")) {
+                return "boolean";
+            } else {
+                String type2 = isVar(second, argu);
+                if (type2.equals("boolean")) {
+                    return "boolean";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
+                }
+            }
+        } else {
+            String type = isVar(first, argu);
+            if (type.equals("boolean")) {
+                return "boolean";
+            } else {
+                throw new Exception("Cannot use logical operators on non boolean data");
+            }
+        }
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "*"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(TimesExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         if (first == "int") {
-//             if (second == "int") {
-//                 return "int";
-//             } else {
-//                 String type2 = isVar(second, argu);
-//                 if (type2 == "int") {
-//                     return "int";
-//                 } else {
-//                     throw new Exception("Cannot use arithmetic operators on non integer data");
-//                 }
-//             }
-//         } else {
-//             String type = isVar(first, argu);
-//             if (type == "int") {
-//                 return "int";
-//             } else {
-//                 throw new Exception("Cannot use arithmetic operators on non integer data");
-//             }
-//         }
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "<"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(CompareExpression n, Class argu) throws Exception {
+       System.out.println("compare");
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        if (first.equals("int")) {
+            if (second.equals("int")) {
+                return "boolean";
+            } else {
+                String type2 = isVar(second, argu);
+                if (type2.equals("int")) {
+                    return "boolean";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
+                }
+            }
+        } else {
+            String type = isVar(first, argu);
+            if (type.equals("int")) {
+                return "boolean";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
+            }
+        }
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "["
-//     * f2 -> PrimaryExpression()
-//     * f3 -> "]"
-//     */
-//    public String visit(ArrayLookup n, Class argu) throws Exception {
-//        String expr = n.f0.accept(this, argu);
-//        String expr2 = n.f2.accept(this, argu);
-//        if (expr == "int[]") {
-//            if (expr2 == "int") {
-//                return "int";
-//            } else {
-//                String type2 = isVar(expr2, argu);
-//                if (type2 == "int") {
-//                    return "int";
-//                } else {
-//                     throw new Exception("Index should be integer");
-//                }
-//            }
-//        } else if (expr == "boolean[]") {
-//            if (expr2 == "int") {
-//                return "boolean";
-//            } else {
-//                String type2 = isVar(expr2, argu);
-//                if (type2 == "int") {
-//                    return "boolean";
-//                } else {
-//                     throw new Exception("Index should be integer");
-//                }
-//            }
-//        } else {
-//            String type = isVar(expr, argu);
-//             if (type == "int[]") {
-//                if (expr2 == "int") {
-//                     return "int";
-//                 } else {
-//                     String type2 = isVar(expr2, argu);
-//                     if (type2 == "int") {
-//                         return "int";
-//                     } else {
-//                             throw new Exception("Index should be integer");
-//                     }
-//                 }
-//             } else if (type == "boolean[]") {
-//                if (expr2 == "int") {
-//                     return "boolean";
-//                 } else {
-//                     String type2 = isVar(expr2, argu);
-//                     if (type2 == "int") {
-//                         return "int";
-//                     } else {
-//                             throw new Exception("Index should be integer");
-//                     }
-//                 }
-//             } else {
-//                 throw new Exception("Cannot index a non array Class");
-//             }
-//        }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "+"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(PlusExpression n, Class argu) throws Exception {
+       System.out.println("plus");
 
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        if (first.equals("int")) {
+            if (second.equals("int")) {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu);
+                if (type2.equals("int")) {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
+                }
+            }
+        } else {
+            String type = isVar(first, argu);
+            if (type.equals("int")) {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
+            }
+        }
+   }
 
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "-"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(MinusExpression n, Class argu) throws Exception {
+       System.out.println("minus");
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "."
-//     * f2 -> "length"
-//     */
-//    public String visit(ArrayLength n, Class argu) throws Exception {
-//         String expr = n.f0.accept(this, argu);
-//         if (expr != "int[]" && expr != "boolean[]") {
-//             String type = isVar(expr, argu);
-//             if (type != "int[]" && type != "boolean[]") {
-//                 throw new Exception("Cannot find the length of a non array Class");
-//             }
-//         }
-//         return "int";
-//    }
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        if (first.equals("int")) {
+            if (second.equals("int")) {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu);
+                if (type2.equals("int")) {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use logical operators on non boolean data");
+                }
+            }
+        } else {
+            String type = isVar(first, argu);
+            if (type.equals("int")) {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
+            }
+        }
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "."
-//     * f2 -> Identifier()
-//     * f3 -> "("
-//     * f4 -> ( ExpressionList() )?
-//     * f5 -> ")"
-//     */
-//    public String visit(MessageSend n, Class argu) throws Exception {
-//         String expr = n.f0.accept(this, argu);
-//         String method = n.f2.accept(this, argu);
-//         String args = n.f4.accept(this, argu);
-//         if (argu.methods.get(method) != null) {
-//             if (isVar(expr, argu) == argu.name) { 
-//                 checkArgs(args, argu.methods.get(method), argu);
-//                 return argu.methods.get(method).returnType;
-//             }
-//         } else {
-//              if (this.table.getClass(expr) == null) {
-//                 throw new Exception("No such class");
-//             } else if (this.table.getClass(expr).methods.get(method) == null) {
-//                 throw new Exception("No such class method");
-//             } else if (this.table.getClass(expr).methods.get(method) != null) { // found a class with this method 
-//                 if (isVar(expr, argu) == this.table.getClass(expr).name) { // is there such a variable in current class or current method? Check types
-//                     checkArgs(args, this.table.getClass(expr).methods.get(method), argu);
-//                     return this.table.getClass(expr).methods.get(method).returnType;
-//                 } else {
-//                     throw new Exception("No such method for this class instance");
-//                 }
-                
-//             }
-//         } 
-//         return null;
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "*"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(TimesExpression n, Class argu) throws Exception {
+       System.out.println("times");
 
-//    /**
-//     * f0 -> Expression()
-//     * f1 -> ExpressionTail()
-//     */
-//    public String visit(ExpressionList n, Class argu) throws Exception {
-//        return n.f0.accept(this, argu) + n.f1.accept(this, argu);
-//    }
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        if (first.equals("int")) {
+            if (second.equals("int")) {
+                return "int";
+            } else {
+                String type2 = isVar(second, argu);
+                if (type2.equals("int")) {
+                    return "int";
+                } else {
+                    throw new Exception("Cannot use arithmetic operators on non integer data");
+                }
+            }
+        } else {
+            String type = isVar(first, argu);
+            if (type.equals("int")) {
+                return "int";
+            } else {
+                throw new Exception("Cannot use arithmetic operators on non integer data");
+            }
+        }
+   }
 
-//    /**
-//     * f0 -> ( ExpressionTerm() )*
-//     */
-//    public String visit(ExpressionTail n, Class argu) throws Exception {
-//       return n.f0.accept(this, argu);
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "["
+    * f2 -> PrimaryExpression()
+    * f3 -> "]"
+    */
+   public String visit(ArrayLookup n, Class argu) throws Exception {
+       System.out.println("array lookup");
 
-//    /**
-//     * f0 -> ","
-//     * f1 -> Expression()
-//     */
-//    public String visit(ExpressionTerm n, Class argu) throws Exception {
-//        return "," + n.f1.accept(this, argu);
-//    }
+       String expr = n.f0.accept(this, argu);
+       String expr2 = n.f2.accept(this, argu);
 
-//    /**
-//     * f0 -> AndExpression()
-//     *       | CompareExpression()
-//     *       | PlusExpression()
-//     *       | MinusExpression()
-//     *       | TimesExpression()
-//     *       | ArrayLookup()
-//     *       | ArrayLength()
-//     *       | MessageSend()
-//     *       | Clause()
-//     */
-//    public String visit(Expression n, Class argu) throws Exception {
-//       return n.f0.accept(this, argu);
-//    }
+       
 
+       if (expr.equals("int[]")) {
+           if (expr2.equals("int")) {
+               return "int";
+           } else {
+               String type2 = isVar(expr2, argu);
+               if (type2.equals("int")) {
+                   return "int";
+               } else {
+                    throw new Exception("Index should be integer");
+               }
+           }
+       } else if (expr.equals("boolean[]")) {
+           if (expr2.equals("int")) {
+               return "boolean";
+           } else {
+               String type2 = isVar(expr2, argu);
+               if (type2.equals("int")) {
+                   return "boolean";
+               } else {
+                    throw new Exception("Index should be integer");
+               }
+           }
+       } else {
+           String type = isVar(expr, argu);
+            if (type.equals("int[]")) {
+               if (expr2.equals("int")) {
+                    return "int";
+                } else {
+                    String type2 = isVar(expr2, argu);
+                    if (type2.equals("int")) {
+                        return "int";
+                    } else {
+                            throw new Exception("Index should be integer");
+                    }
+                }
+            } else if (type.equals("boolean[]")) {
+               if (expr2.equals("int")) {
+                    return "boolean";
+                } else {
+                    String type2 = isVar(expr2, argu);
+                    if (type2.equals("int")) {
+                        return "int";
+                    } else {
+                            throw new Exception("Index should be integer");
+                    }
+                }
+            } else {
+                throw new Exception("Cannot index a non array Class");
+            }
+       }
+   }
 
-//    /**
-//     * f0 -> <INTEGER_LITERAL>
-//     */
-//    public String visit(IntegerLiteral n, Class argu) throws Exception {
-//       return "int";
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> "length"
+    */
+   public String visit(ArrayLength n, Class argu) throws Exception {
+       System.out.println("array length");
 
-//    /**
-//     * f0 -> "true"
-//     */
-//    public String visit(TrueLiteral n, Class argu) throws Exception {
-//       return "boolean";
-//    }
+        String expr = n.f0.accept(this, argu);
+        if (!expr.equals("int[]") && !expr.equals("boolean[]")) { // basic array type
+            String type = isVar(expr, argu);    // identifier of basic array type
+            if (!type.equals("int[]") && !type.equals("boolean[]")) {
+                throw new Exception("Cannot find the length of a non array Class");
+            }
+        }
+        return "int";
+   }
 
-//    /**
-//     * f0 -> "false"
-//     */
-//    public String visit(FalseLiteral n, Class argu) throws Exception {
-//       return "boolean";
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( ExpressionList() )?
+    * f5 -> ")"
+    */
+   public String visit(MessageSend n, Class argu) throws Exception {
+       System.out.println("call method");
+
+        String expr = n.f0.accept(this, argu);
+        String method = n.f2.accept(this, argu);
+        String args = n.f4.accept(this, argu);
+
+        if (this.table.getClass(expr) == null) { // not a class name but a class identifier
+            if (this.table.getClass(isVar(expr, argu)) != null) {   // get corresponding class
+                if (this.table.getClass(isVar(expr, argu)).methods.get(method) == null) {
+                    throw new Exception("No such class method");
+                } else if (this.table.getClass(isVar(expr, argu)).methods.get(method) != null) { 
+                    // checkArgs(args, this.table.getClass(isVar(expr, argu)).methods.get(method), argu);
+                    return this.table.getClass(isVar(expr, argu)).methods.get(method).returnType;
+                }
+            }
+            throw new Exception("No such class");
+        } else if (this.table.getClass(expr).methods.get(method) == null) {
+            throw new Exception("No such class method");
+        } else if (this.table.getClass(expr).methods.get(method) != null) { // found a class with this method 
+            // checkArgs(args, this.table.getClass(expr).methods.get(method), argu);
+            return this.table.getClass(expr).methods.get(method).returnType;
+
+        }
+        return null;
+   }
+
+   /**
+    * f0 -> Expression()
+    * f1 -> ExpressionTail()
+    */
+   public String visit(ExpressionList n, Class argu) throws Exception {
+       return n.f0.accept(this, argu) + " " + n.f1.accept(this, argu);
+   }
+
+   /**
+    * f0 -> ( ExpressionTerm() )*
+    */
+   public String visit(ExpressionTail n, Class argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
+
+   /**
+    * f0 -> ","
+    * f1 -> Expression()
+    */
+   public String visit(ExpressionTerm n, Class argu) throws Exception {
+       return "," + n.f1.accept(this, argu);
+   }
+
+   /**
+    * f0 -> AndExpression()
+    *       | CompareExpression()
+    *       | PlusExpression()
+    *       | MinusExpression()
+    *       | TimesExpression()
+    *       | ArrayLookup()
+    *       | ArrayLength()
+    *       | MessageSend()
+    *       | Clause()
+    */
+   public String visit(Expression n, Class argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
 
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> "boolean"
-//     * f2 -> "["
-//     * f3 -> Expression()
-//     * f4 -> "]"
-//     */
-//    public String visit(BooleanArrayAllocationExpression n, Class argu) throws Exception {
-//        return "boolean[]";
-//    }
+   /**
+    * f0 -> <INTEGER_LITERAL>
+    */
+   public String visit(IntegerLiteral n, Class argu) throws Exception {
+      return "int";
+   }
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> "int"
-//     * f2 -> "["
-//     * f3 -> Expression()
-//     * f4 -> "]"
-//     */
-//    public String visit(IntegerArrayAllocationExpression n, Class argu) throws Exception {
-//        return "int[]";
-//    }
+   /**
+    * f0 -> "true"
+    */
+   public String visit(TrueLiteral n, Class argu) throws Exception {
+      return "boolean";
+   }
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> Identifier()
-//     * f2 -> "("
-//     * f3 -> ")"
-//     */
-//    public String visit(AllocationExpression n, Class argu) throws Exception {
-//         String type = n.f1.accept(this, argu);
-// 		if (this.table.getClass(type) == null)
-// 			throw new Exception("No such class name");
-// 		return type;
-//    }
+   /**
+    * f0 -> "false"
+    */
+   public String visit(FalseLiteral n, Class argu) throws Exception {
+      return "boolean";
+   }
 
-//    /**
-//     * f0 -> "!"
-//     * f1 -> Clause()
-//     */
-//     // type or identifier
-//    public String visit(NotExpression n, Class argu) throws Exception {
-//         String clause = n.f1.accept(this, argu);
-//         if (clause == "boolean") {
-//             return "boolean";
-//         } else {
-//             throw new Exception("Cannot use logical operators on non boolean data");
-//         }
-   
-//    }
 
-//     /**
-//     * f0 -> "this"
-//     */
-//    public String visit(ThisExpression n, Class argu) throws Exception {
-//       return argu.name;
-//    }
+   /**
+    * f0 -> "new"
+    * f1 -> "boolean"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+   public String visit(BooleanArrayAllocationExpression n, Class argu) throws Exception {
+       String expr = n.f3.accept(this, argu);
+       if (!expr.equals("int") && !isVar(expr, argu).equals("int")) { // basic integer type or integer identifier
+			throw new Exception("Index should be integer");
+       }
+       return "boolean[]";
+   }
 
-//    /**
-//     * f0 -> "("
-//     * f1 -> Expression()
-//     * f2 -> ")"
-//     */
-//    public String visit(BracketExpression n, Class argu) throws Exception {
-//         String expr = n.f1.accept(this, argu);
-//         if (expr == "int" || expr == "boolean" || expr == "int[]" || expr == "boolean[]" ) {
-//             return expr;
-//         }
-//         if (this.table.getClass(expr) != null) {    
-//             return this.table.getClass(expr).name;
-//         } 
-//         return isVar(expr, argu);
-//    }
+   /**
+    * f0 -> "new"
+    * f1 -> "int"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+   public String visit(IntegerArrayAllocationExpression n, Class argu) throws Exception {
+        String expr = n.f3.accept(this, argu);
+        if (!expr.equals("int") && !isVar(expr, argu).equals("int")) { // basic integer type or integer identifier
+            throw new Exception("Index should be integer");
+        }
+       return "int[]";
+   }
+
+   /**
+    * f0 -> "new"
+    * f1 -> Identifier()
+    * f2 -> "("
+    * f3 -> ")"
+    */
+   public String visit(AllocationExpression n, Class argu) throws Exception {
+       System.out.println("allocation");
+
+        String type = n.f1.accept(this, argu);
+		if (this.table.getClass(type) == null)  {// must be a class instance
+			throw new Exception("No such class name");
+        }
+		return type;
+   }
+
+   /**
+    * f0 -> "!"
+    * f1 -> Clause()
+    */
+   public String visit(NotExpression n, Class argu) throws Exception {
+       System.out.println("not");
+
+        String clause = n.f1.accept(this, argu);
+        if (clause.equals("boolean") || isVar(clause, argu).equals("boolean")) {   // basic type or identifier of basic type
+            return "boolean";
+        } else {
+            throw new Exception("Cannot use logical operators on non boolean data");
+        }
+   }
+
+    /**
+    * f0 -> "this"
+    */
+   public String visit(ThisExpression n, Class argu) throws Exception {
+      System.out.println("this");
+      return argu.name;
+   }
+
+   /**
+    * f0 -> "("
+    * f1 -> Expression()
+    * f2 -> ")"
+    */
+   public String visit(BracketExpression n, Class argu) throws Exception {
+       System.out.println("brackets");
+
+        String expr = n.f1.accept(this, argu);
+        if (expr.equals("int") || expr.equals("boolean") || expr.equals("int[]") || expr.equals("boolean[]") ) { // basic type
+            return expr;
+        }
+        if (this.table.getClass(expr) != null) {       // class instance
+            return this.table.getClass(expr).name;
+        } 
+        return isVar(expr, argu);   // identifier of basic type  // otherwise exception
+   }
 }

@@ -205,7 +205,7 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
    public String visit(FormalParameterList n, Void argu) throws Exception { //
         String formalParam = n.f0.accept(this, argu);
         String formalParamTail = n.f1.accept(this, argu);
-        return formalParam + " " + formalParamTail;
+        return formalParam + formalParamTail;
    }
 
    /**
@@ -222,7 +222,12 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
     * f0 -> ( FormalParameterTerm() )*
     */
    public String visit(FormalParameterTail n, Void argu) throws Exception {
-      return n.f0.accept(this, argu);
+        String tail = "";
+        for (int i = 0; i < n.f0.size(); i++) {
+            String param = n.f0.elementAt(i).accept(this, argu);
+            tail = tail + param;
+        }
+        return tail;
    }
 
    /**
