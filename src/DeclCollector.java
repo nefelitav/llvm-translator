@@ -202,7 +202,7 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
     * f0 -> FormalParameter()
     * f1 -> FormalParameterTail()
     */
-   public String visit(FormalParameterList n, Void argu) throws Exception {
+   public String visit(FormalParameterList n, Void argu) throws Exception { //
         String formalParam = n.f0.accept(this, argu);
         String formalParamTail = n.f1.accept(this, argu);
         return formalParam + " " + formalParamTail;

@@ -33,11 +33,11 @@ public class Class {
                 offset = 8;
                 break;
             default:
-                if (table.getClass(fieldType) != null || fieldType.equals(this.name)) { // maybe its a pointer to a previously declared class or to the same class
+                //if (table.getClass(fieldType) != null || fieldType.equals(this.name)) { // maybe its a pointer to a previously declared class or to the same class
                     offset = 8;
-                } else {
-                    throw new Exception("Not a valid type");
-                }
+                // } else {
+                //     throw new Exception("Not a valid type");
+                // }
         }
 
         Variable field = new Variable(fieldName, fieldType);            // create variable
@@ -54,12 +54,12 @@ public class Class {
         }
         Integer offset = 8;
 
-        if (!methodType.equals("int") && !methodType.equals("boolean") && !methodType.equals("int[]") && !methodType.equals("boolean[]") && table.getClass(methodType) == null && !methodType.equals(this.name)) {
-            if (!(methodType.equals("void") && methodName.equals("main")))
-            {
-                throw new Exception("Not a valid type");
-            }
-        }
+        // if (!methodType.equals("int") && !methodType.equals("boolean") && !methodType.equals("int[]") && !methodType.equals("boolean[]") && table.getClass(methodType) == null && !methodType.equals(this.name)) {
+        //     if (!(methodType.equals("void") && methodName.equals("main")))
+        //     {
+        //         throw new Exception("Not a valid type");
+        //     }
+        // }
         Method method = new Method(methodName, methodType, methodParams, methodVars);                // create Method
         this.methods.put(methodName, method);                          // link this method to this class
         if (methodName.equals("main")) {
