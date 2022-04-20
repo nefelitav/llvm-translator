@@ -1,5 +1,6 @@
 package src;
 import java.util.*;
+import java.util.Map.*;
 
 public class Class {
     public String name;
@@ -60,18 +61,29 @@ public class Class {
                 throw new Exception("Method cant have different return type from the parent one.");
             }
 
-            // for (Map.Entry<String, Variable> entry : (this.extending.methods.get(methodName).parameters).entrySet()) {
-            //     String key = entry.getKey();
-            //     Variable value = entry.getValue();
-            //     for (Map.Entry<String, Variable> entry2 : (method.parameters).entrySet()) {
-            //         String key2 = entry2.getKey();
-            //         Variable value2 = entry2.getValue();
-            //         if (!((value.type).equals(value2.type))) {
-            //             throw new Exception("Method cant have different parameters from the parent one.");
-            //         }
-            //     }
-            // }
-  
+            Set entrySet = (this.extending.methods.get(methodName).parameters).entrySet();
+            Iterator it = entrySet.iterator();
+            Set entrySet2 = (method.parameters).entrySet();
+            Iterator it2 = entrySet2.iterator();
+
+            while (it.hasNext() || it2.hasNext()) {
+                Map.Entry<String, Variable> entry = (Map.Entry<String, Variable>) it.next();
+                Map.Entry<String, Variable> entry2 = (Map.Entry<String, Variable>) it2.next();
+
+                String key = (String)entry.getKey();
+                Variable value = (Variable)entry.getValue();
+                String key2 = (String)entry2.getKey();
+                Variable value2 = (Variable)entry2.getValue();
+
+                // System.out.println(key + " " + key2);
+                // System.out.println(value.type + " " + value2.type);
+
+                if (!key.equals(key2) || !(value.type).equals(value2.type)) {
+                    throw new Exception("Method cant have different parameters from the parent one.");
+                }
+
+            }
+
         } else {
             table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
             method.offset = table.methodOffset;                       
