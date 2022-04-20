@@ -55,8 +55,28 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
                 String arg = (String) it2.next();
                 if (!arg.equals("int") && !arg.equals("boolean") & !arg.equals("int[]") && !arg.equals("boolean[]")) {
                     if (this.table.getClass(arg) == null) {
+
                         if (!isVar(arg, currClass).equals(paramType)) {
+                            if (this.table.getClass(isVar(arg, currClass)).extending != null) {
+                                Class temp = this.table.getClass(isVar(arg, currClass)).extending;
+                                while(temp != null) {
+                                    if ((temp.name).equals(paramType)) {
+                                        return null;
+                                    }
+                                    temp = temp.extending;
+                                }
+                            }
                             throw new Exception("Formal parameters do not match with arguments");
+                        }
+                    } else {
+                        if (this.table.getClass(arg).extending != null) {
+                            Class temp = this.table.getClass(arg).extending;
+                            while(temp != null) {
+                                if ((temp.name).equals(paramType)) {
+                                    return null;
+                                }
+                                temp = temp.extending;
+                            }
                         }
                     }
                 }
@@ -301,6 +321,7 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
         String identifier = n.f0.accept(this, argu);
         String expr = n.f2.accept(this, argu);
 
+
         if (identifier.equals(expr)) {
             return null;
         }
@@ -340,6 +361,13 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
             if (identifierType.equals(exprType)) {
                 return null;
             } else {
+                temp = this.table.getClass(exprType).extending;
+                while (temp != null) {
+                    if (identifierType.equals(temp.name)) { // parent has this method
+                        return null;
+                    }
+                    temp = temp.extending;
+                }
                 throw new Exception("Cannot assign to a variable of different type");
             }
         }
