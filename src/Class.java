@@ -39,9 +39,16 @@ public class Class {
 
         Variable field = new Variable(fieldName, fieldType);            // create variable
         this.fields.put(fieldName, field);                          // link this variable to this class
-        table.fieldOffset = table.fieldOffset + table.fieldOffsetNext; // increment to get current field's position
-        field.offset = table.fieldOffset;                       
-        table.fieldOffsetNext = offset;                              // next field's position
+
+        if ((this.fields).size() == 1 && this.extending == null) {
+            table.fieldOffset = 0; // increment to get current field's position
+            field.offset = 0;                       
+            table.fieldOffsetNext = offset;                              // next field's position
+        } else {
+            table.fieldOffset = table.fieldOffset + table.fieldOffsetNext; // increment to get current field's position
+            field.offset = table.fieldOffset;                       
+            table.fieldOffsetNext = offset;                              // next field's position
+        }
     }
 
     public void addMethod(String methodType, String methodName, String methodParams, String methodVars, SymbolTable table) throws Exception {
@@ -85,9 +92,16 @@ public class Class {
             }
 
         } else {
-            table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
-            method.offset = table.methodOffset;                       
-            table.methodOffsetNext = offset;                              // next method's position
+            if ((this.methods).size() == 1) {
+                table.methodOffset = 0; // increment to get current method's position
+                method.offset = 0;                       
+                table.methodOffsetNext = offset;                              // next method's position
+            } else {
+                table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
+                method.offset = table.methodOffset;                       
+                table.methodOffsetNext = offset;                              // next method's position
+            }
+            
         }
     }
 }
