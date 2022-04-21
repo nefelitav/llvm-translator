@@ -92,10 +92,16 @@ public class Class {
             }
 
         } else {
-            if ((this.methods).size() == 1) {
-                table.methodOffset = 0; // increment to get current method's position
-                method.offset = 0;                       
-                table.methodOffsetNext = offset;                              // next method's position
+            if ((this.methods).size() == 1) { // first method of class
+                if (this.extending != null && this.extending.methods.get(methodName) == null) {
+                    table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
+                    method.offset = table.methodOffset;                       
+                    table.methodOffsetNext = offset;                              // next method's position
+                } else {
+                    table.methodOffset = 0; 
+                    method.offset = 0;                       
+                    table.methodOffsetNext = offset;                              // next method's position
+                }  
             } else {
                 table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
                 method.offset = table.methodOffset;                       

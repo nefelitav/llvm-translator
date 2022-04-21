@@ -15,7 +15,6 @@ class ManyClasses {
 
 class A {
     boolean data;
-
     public int get(){
         int rv;
         if(data){
