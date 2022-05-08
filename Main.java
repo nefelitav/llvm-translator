@@ -37,9 +37,7 @@ public class Main {
                     table.printTable();
                 } catch(Exception e) {
                     System.out.println();
-                    System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                     System.out.println(e);
-                    System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                     System.out.println();
                 }
             }

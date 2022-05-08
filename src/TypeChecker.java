@@ -320,12 +320,9 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
    public String visit(AssignmentStatement n, Class argu) throws Exception {
         String identifier = n.f0.accept(this, argu);
         String expr = n.f2.accept(this, argu);
-
-
         if (identifier.equals(expr)) {
             return null;
         }
-
         if (this.table.getClass(expr) != null) {
             if (isVar(identifier, argu).equals(this.table.getClass(expr).name)) { // same class type
                 return null;
@@ -338,8 +335,6 @@ public class TypeChecker extends GJDepthFirst<String, Class> {
                 temp = temp.extending;
             }
         }
-
-        
         String identifierType = isVar(identifier, argu);
         Class temp = null;
         if (this.table.getClass(expr) != null) {
