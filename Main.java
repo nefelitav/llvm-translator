@@ -34,12 +34,13 @@ public class Main {
                     root.accept(declCollector, null);
                     TypeChecker typeChecker = new TypeChecker(table);
                     root.accept(typeChecker, null);
-                    table.printTable();
+                    // table.printTable();
                 } catch(Exception e) {
                     System.out.println();
                     System.out.println(e);
                     System.out.println();
                 }
+                LLVMGenerator LLVMGenerator = new LLVMGenerator(table);
             }
             catch (ParseException ex) {
                 System.out.println(ex.getMessage());

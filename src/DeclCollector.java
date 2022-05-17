@@ -238,12 +238,6 @@ public class DeclCollector extends GJDepthFirst<String, Void> {
         return "," + n.f1.accept(this, argu);
    }
 
-
-
-
-
-
-
    /**
     * f0 -> ArrayType()
     *       | BooleanType()
