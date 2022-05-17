@@ -41,6 +41,8 @@ public class Main {
                     System.out.println();
                 }
                 LLVMGenerator LLVMGenerator = new LLVMGenerator(table);
+                root.accept(LLVMGenerator, null);
+
             }
             catch (ParseException ex) {
                 System.out.println(ex.getMessage());

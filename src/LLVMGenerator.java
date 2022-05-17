@@ -30,7 +30,6 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         this.LLVMCode = "";
 
         Set<String> classNames = t.table.keySet();
-        // for each class
         outerloop : for (String className : classNames) {
             Set<String> methodNames = t.table.get(className).methods.keySet();
             Integer methodNum = t.table.get(className).methods.size();
@@ -113,82 +112,85 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 
     }
 
-//     /**
-//     * f0 -> "class"
-//     * f1 -> Identifier()
-//     * f2 -> "{"
-//     * f3 -> "public"
-//     * f4 -> "static"
-//     * f5 -> "void"
-//     * f6 -> "main"
-//     * f7 -> "("
-//     * f8 -> "String"
-//     * f9 -> "["
-//     * f10 -> "]"
-//     * f11 -> Identifier()
-//     * f12 -> ")"
-//     * f13 -> "{"
-//     * f14 -> ( VarDeclaration() )*
-//     * f15 -> ( Statement() )*
-//     * f16 -> "}"
-//     * f17 -> "}"
-//     */
-//    public String visit(MainClass n, Class argu) throws Exception {
-//         String className = n.f1.accept(this, argu);
-//         Class classInstance = this.table.getClass(className);
-//         this.currMethod = classInstance.methods.get("main");
-//         n.f11.accept(this, classInstance);
-//         for (int i = 0; i < n.f14.size(); i++) {
-//           String field = n.f14.elementAt(i).accept(this, classInstance);
-//         }
-//         for (int i = 0; i < n.f15.size(); i++) {
-//           String method = n.f15.elementAt(i).accept(this, classInstance);
-//         }
-//         return null;
-//    }
+    /**
+    * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "{"
+    * f3 -> "public"
+    * f4 -> "static"
+    * f5 -> "void"
+    * f6 -> "main"
+    * f7 -> "("
+    * f8 -> "String"
+    * f9 -> "["
+    * f10 -> "]"
+    * f11 -> Identifier()
+    * f12 -> ")"
+    * f13 -> "{"
+    * f14 -> ( VarDeclaration() )*
+    * f15 -> ( Statement() )*
+    * f16 -> "}"
+    * f17 -> "}"
+    */
+   public String visit(MainClass n, Class argu) throws Exception {
+        String LLVMCodeAccumulation = "define i32 @main() {";
+        String className = n.f1.accept(this, argu);
+        Class classInstance = this.table.getClass(className);
+        // this.currMethod = classInstance.methods.get("main");
+        // n.f11.accept(this, classInstance);
+        // for (int i = 0; i < n.f14.size(); i++) {
+        //   String field = n.f14.elementAt(i).accept(this, classInstance);
+        // }
+        // for (int i = 0; i < n.f15.size(); i++) {
+        //   String method = n.f15.elementAt(i).accept(this, classInstance);
+        // }
+        LLVMCodeAccumulation += "\n}";
+        System.out.println(LLVMCodeAccumulation);
+        return null;
+   }
 
-//    /**
-//     * f0 -> "class"
-//     * f1 -> Identifier()
-//     * f2 -> "{"
-//     * f3 -> ( VarDeclaration() )*
-//     * f4 -> ( MethodDeclaration() )*
-//     * f5 -> "}"
-//     */
-//    public String visit(ClassDeclaration n, Class argu) throws Exception {
-//       String className = n.f1.accept(this, argu);
-//       Class classInstance = this.table.getClass(className);
-//       for (int i = 0; i < n.f3.size(); i++) {
-//         String field = n.f3.elementAt(i).accept(this, classInstance);
-//       }
-//       for (int i = 0; i < n.f4.size(); i++) {
-//         String method = n.f4.elementAt(i).accept(this, classInstance);
-//       }
-//       return null;
-//    }
+   /**
+    * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "{"
+    * f3 -> ( VarDeclaration() )*
+    * f4 -> ( MethodDeclaration() )*
+    * f5 -> "}"
+    */
+   public String visit(ClassDeclaration n, Class argu) throws Exception {
+      String className = n.f1.accept(this, argu);
+      Class classInstance = this.table.getClass(className);
+    //   for (int i = 0; i < n.f3.size(); i++) {
+    //     String field = n.f3.elementAt(i).accept(this, classInstance);
+    //   }
+      for (int i = 0; i < n.f4.size(); i++) {
+        String method = n.f4.elementAt(i).accept(this, classInstance);
+      }
+      return null;
+   }
 
-//    /**
-//     * f0 -> "class"
-//     * f1 -> Identifier()
-//     * f2 -> "extends"
-//     * f3 -> Identifier()
-//     * f4 -> "{"
-//     * f5 -> ( VarDeclaration() )*
-//     * f6 -> ( MethodDeclaration() )*
-//     * f7 -> "}"
-//     */
-//    public String visit(ClassExtendsDeclaration n, Class argu) throws Exception {
-//         String parent = n.f3.accept(this, argu);
-//         String className = n.f1.accept(this, argu);
-//         Class classInstance = this.table.getClass(className);
-//         for (int i = 0; i < n.f5.size(); i++) {
-//             String field = n.f5.elementAt(i).accept(this, classInstance);
-//         }
-//         for (int i = 0; i < n.f6.size(); i++) {
-//             String method = n.f6.elementAt(i).accept(this, classInstance);
-//         }
-//         return null;
-//    }
+   /**
+    * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "extends"
+    * f3 -> Identifier()
+    * f4 -> "{"
+    * f5 -> ( VarDeclaration() )*
+    * f6 -> ( MethodDeclaration() )*
+    * f7 -> "}"
+    */
+   public String visit(ClassExtendsDeclaration n, Class argu) throws Exception {
+        String parent = n.f3.accept(this, argu);
+        String className = n.f1.accept(this, argu);
+        Class classInstance = this.table.getClass(className);
+        // for (int i = 0; i < n.f5.size(); i++) {
+        //     String field = n.f5.elementAt(i).accept(this, classInstance);
+        // }
+        for (int i = 0; i < n.f6.size(); i++) {
+            String method = n.f6.elementAt(i).accept(this, classInstance);
+        }
+        return null;
+   }
 
 
 //    /**
@@ -203,137 +205,129 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         return fieldType + " " + fieldName;
 //    }
 
-//    /**
-//     * f0 -> "public"
-//     * f1 -> Type()
-//     * f2 -> Identifier()
-//     * f3 -> "("
-//     * f4 -> ( FormalParameterList() )?
-//     * f5 -> ")"
-//     * f6 -> "{"
-//     * f7 -> ( VarDeclaration() )*
-//     * f8 -> ( Statement() )*
-//     * f9 -> "return"
-//     * f10 -> Expression()
-//     * f11 -> ";"
-//     * f12 -> "}"
-//     */
-//    public String visit(MethodDeclaration n, Class argu) throws Exception {
-//         String methodType = n.f1.accept(this, argu);
-//         validType(methodType);
-//         String methodName = n.f2.accept(this, argu);
-//         this.currMethod = argu.methods.get(methodName);
-//         String methodParams = n.f4.accept(this, argu);
+   /**
+    * f0 -> "public"
+    * f1 -> Type()
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( FormalParameterList() )?
+    * f5 -> ")"
+    * f6 -> "{"
+    * f7 -> ( VarDeclaration() )*
+    * f8 -> ( Statement() )*
+    * f9 -> "return"
+    * f10 -> Expression()
+    * f11 -> ";"
+    * f12 -> "}"
+    */
+   public String visit(MethodDeclaration n, Class argu) throws Exception {
+        String methodType = n.f1.accept(this, argu);
+        String methodName = n.f2.accept(this, argu);
+        // this.currMethod = argu.methods.get(methodName);
+        String methodParams = n.f4.accept(this, argu);
+        if (methodParams == null) {
+            methodParams = "i8* %this";
+        }
+        String LLVMCodeAccumulation = "define "+ typeInLLVM(methodType) +" @"+ argu.name + "." + methodName +"(" + methodParams + ") {";
+       
+        LLVMCodeAccumulation += "\n}";
 
-//         for (int i = 0; i < n.f7.size(); i++) {
-//             String method = n.f7.elementAt(i).accept(this, argu);
-//         }
-//         for (int i = 0; i < n.f8.size(); i++) {
-//             String method = n.f8.elementAt(i).accept(this, argu);
-//         }
-//         String returnType = n.f10.accept(this, argu);
-//         if (returnType.equals("int") || returnType.equals("boolean") || returnType.equals("int[]") || returnType.equals("boolean[]")) {
-//             if (!returnType.equals(argu.methods.get(methodName).returnType)) {
-//                 throw new Exception("Return type is different from Method type");
-//             }
-//         }
-//         if (this.table.getClass(returnType) != null) {
-//             if (!returnType.equals(argu.methods.get(methodName).returnType)) {
-//                 throw new Exception("Return type is different from Method type");
-//             }
-//         }
-//         if (!returnType.equals(argu.methods.get(methodName).returnType) && !(isVar(returnType, argu)).equals(argu.methods.get(methodName).returnType)) {
-//             throw new Exception("Return type is different from Method type");
-//         }
+        System.out.println(LLVMCodeAccumulation);
 
-//         return null;
-//    }
+        return null;
+   }
     
-//    /**
-//     * f0 -> FormalParameter()
-//     * f1 -> FormalParameterTail()
-//     */
-//    public String visit(FormalParameterList n, Class argu) throws Exception {
-//         String formalParam = n.f0.accept(this, argu);
-//         String formalParamTail = n.f1.accept(this, argu);
-//         return formalParam + formalParamTail;
-//    }
+   /**
+    * f0 -> FormalParameter()
+    * f1 -> FormalParameterTail()
+    */
+   public String visit(FormalParameterList n, Class argu) throws Exception {
+        String formalParam = n.f0.accept(this, argu);
+        String formalParamTail = n.f1.accept(this, argu);
+        if (formalParam != null) {
+            if (formalParamTail != null) {
+                return "i8* %this, " + formalParam + formalParamTail;
+            } else {
+                return "i8* %this, " + formalParam;
+            }
+        }
+        return null;
+   }
 
-//    /**
-//     * f0 -> ( FormalParameterTerm() )*
-//     */
-//    public String visit(FormalParameterTail n, Class argu) throws Exception {
-//       return n.f0.accept(this, argu);
-//    }
+   /**
+    * f0 -> ( FormalParameterTerm() )*
+    */
+   public String visit(FormalParameterTail n, Class argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
 
 
-//    /**
-//     * f0 -> ","
-//     * f1 -> FormalParameter()
-//     */
-//    public String visit(FormalParameterTerm n, Class argu) throws Exception {
-//         return "," + n.f1.accept(this, argu);
-//    }
+   /**
+    * f0 -> ","
+    * f1 -> FormalParameter()
+    */
+   public String visit(FormalParameterTerm n, Class argu) throws Exception {
+        return "," + n.f1.accept(this, argu);
+   }
 
-//    /**
-//     * f0 -> Type()
-//     * f1 -> Identifier()
-//     */
-//    public String visit(FormalParameter n, Class argu) throws Exception {
-//         String paramType = n.f0.accept(this, argu);
-//         validType(paramType);
-//         String paramName = n.f1.accept(this, argu);
-//         return paramType + " " + paramName;
-//    }
+   /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    */
+   public String visit(FormalParameter n, Class argu) throws Exception {
+        String paramType = n.f0.accept(this, argu);
+        String paramName = n.f1.accept(this, argu);
+        return typeInLLVM(paramType) + " %." + paramName;
+   }
 
-//     /**
-//     * f0 -> ArrayType()
-//     *       | BooleanType()
-//     *       | IntegerType()
-//     *       | Identifier()
-//     */
-//    public String visit(Type n, Class argu) throws Exception {
-//       return n.f0.accept(this, argu);
-//    }
+    /**
+    * f0 -> ArrayType()
+    *       | BooleanType()
+    *       | IntegerType()
+    *       | Identifier()
+    */
+   public String visit(Type n, Class argu) throws Exception {
+      return n.f0.accept(this, argu);
+   }
 
-//    /**
-//     * f0 -> "boolean"
-//     * f1 -> "["
-//     * f2 -> "]"
-//     */
-//    public String visit(BooleanArrayType n, Class argu) throws Exception {
-//        return "boolean[]";
-//    }
+   /**
+    * f0 -> "boolean"
+    * f1 -> "["
+    * f2 -> "]"
+    */
+   public String visit(BooleanArrayType n, Class argu) throws Exception {
+       return "boolean[]";
+   }
 
-//    /**
-//     * f0 -> "int"
-//     * f1 -> "["
-//     * f2 -> "]"
-//     */
-//    public String visit(IntegerArrayType n, Class argu) throws Exception {
-//         return "int[]";
-//    }
+   /**
+    * f0 -> "int"
+    * f1 -> "["
+    * f2 -> "]"
+    */
+   public String visit(IntegerArrayType n, Class argu) throws Exception {
+        return "int[]";
+   }
 
-//    /**
-//     * f0 -> "boolean"
-//     */
-//    public String visit(BooleanType n, Class argu) throws Exception {
-//         return "boolean";
-//    }
+   /**
+    * f0 -> "boolean"
+    */
+   public String visit(BooleanType n, Class argu) throws Exception {
+        return "boolean";
+   }
 
-//    /**
-//     * f0 -> "int"
-//     */
-//    public String visit(IntegerType n, Class argu) throws Exception {
-//         return "int";
-//    }
+   /**
+    * f0 -> "int"
+    */
+   public String visit(IntegerType n, Class argu) throws Exception {
+        return "int";
+   }
 
-//     /**
-//     * f0 -> <IDENTIFIER>
-//     */
-//     public String visit(Identifier n, Class argu) throws Exception {
-//         return n.f0.toString();
-//     }
+    /**
+    * f0 -> <IDENTIFIER>
+    */
+    public String visit(Identifier n, Class argu) throws Exception {
+        return n.f0.toString();
+    }
 
 //    /**
 //     * f0 -> Identifier()
