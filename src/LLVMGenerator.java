@@ -18,7 +18,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
             case "boolean":
                 return "i1";
             case "int[]":
-                return "i1";
+                return "i32*";
             default:
                 return "i8*";
         }
@@ -133,14 +133,14 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
     * f17 -> "}"
     */
    public String visit(MainClass n, Class argu) throws Exception {
-        String LLVMCodeAccumulation = "define i32 @main() {";
+        String LLVMCodeAccumulation = "define i32 @main() {\n";
         String className = n.f1.accept(this, argu);
         Class classInstance = this.table.getClass(className);
         // this.currMethod = classInstance.methods.get("main");
         // n.f11.accept(this, classInstance);
-        // for (int i = 0; i < n.f14.size(); i++) {
-        //   String field = n.f14.elementAt(i).accept(this, classInstance);
-        // }
+        for (int i = 0; i < n.f14.size(); i++) {
+          LLVMCodeAccumulation += n.f14.elementAt(i).accept(this, classInstance);
+        }
         // for (int i = 0; i < n.f15.size(); i++) {
         //   String method = n.f15.elementAt(i).accept(this, classInstance);
         // }
@@ -160,11 +160,12 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
    public String visit(ClassDeclaration n, Class argu) throws Exception {
       String className = n.f1.accept(this, argu);
       Class classInstance = this.table.getClass(className);
+      String LLVMCodeAccumulation = "";
     //   for (int i = 0; i < n.f3.size(); i++) {
-    //     String field = n.f3.elementAt(i).accept(this, classInstance);
+    //     LLVMCodeAccumulation += n.f3.elementAt(i).accept(this, classInstance);
     //   }
       for (int i = 0; i < n.f4.size(); i++) {
-        String method = n.f4.elementAt(i).accept(this, classInstance);
+        LLVMCodeAccumulation += n.f4.elementAt(i).accept(this, classInstance);
       }
       return null;
    }
@@ -183,27 +184,27 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         String parent = n.f3.accept(this, argu);
         String className = n.f1.accept(this, argu);
         Class classInstance = this.table.getClass(className);
+        String LLVMCodeAccumulation = "";
         // for (int i = 0; i < n.f5.size(); i++) {
         //     String field = n.f5.elementAt(i).accept(this, classInstance);
         // }
         for (int i = 0; i < n.f6.size(); i++) {
-            String method = n.f6.elementAt(i).accept(this, classInstance);
+            LLVMCodeAccumulation += n.f6.elementAt(i).accept(this, classInstance);
         }
         return null;
    }
 
 
-//    /**
-//     * f0 -> Type()
-//     * f1 -> Identifier()
-//     * f2 -> ";"
-//     */
-//    public String visit(VarDeclaration n, Class argu) throws Exception {
-//         String fieldType = n.f0.accept(this, argu);
-//         validType(fieldType);
-//         String fieldName = n.f1.accept(this, argu);
-//         return fieldType + " " + fieldName;
-//    }
+   /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    * f2 -> ";"
+    */
+   public String visit(VarDeclaration n, Class argu) throws Exception {
+        String fieldType = n.f0.accept(this, argu);
+        String fieldName = n.f1.accept(this, argu);
+        return  "\t%"+ fieldName + " = alloca " + typeInLLVM(fieldType) + "\n";
+   }
 
    /**
     * f0 -> "public"
@@ -230,11 +231,12 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         }
         String LLVMCodeAccumulation = "define "+ typeInLLVM(methodType) +" @"+ argu.name + "." + methodName +"(" + methodParams + ") {";
        
+        for (int i = 0; i < n.f7.size(); i++) {
+           LLVMCodeAccumulation += n.f7.elementAt(i).accept(this, argu);
+        }
         LLVMCodeAccumulation += "\n}";
-
         System.out.println(LLVMCodeAccumulation);
-
-        return null;
+        return LLVMCodeAccumulation;
    }
     
    /**
