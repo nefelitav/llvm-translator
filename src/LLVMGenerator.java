@@ -41,6 +41,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 
     public Integer objectSize(String object) {
         Variable lastField = null;
+
         for (Map.Entry<String, Variable> entry : this.table.getClass(object).fields.entrySet()) {
             if (lastField == null || entry.getValue().offset.compareTo(lastField.offset) > 0) {
                 lastField = entry.getValue();
@@ -76,6 +77,41 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         }
         return null;
     }
+
+    public String Accumulator(String input, Class currClass) {
+        String LLVMCodeAccumulation;
+        if (input.equals("true")) {
+            return 1;
+        }
+        if (input.equals("false")) {
+            return 0;
+        }
+        if (StringUtils.isNumeric(input)) {
+            return input;
+        }
+
+        if (currClass.extending != null) {
+            Class temp = currClass.extending;
+            while(temp != null) {
+                if (temp.fields.get(input) != null) {
+                    LLVMCodeAccumulation +=	"\n\t%_" + (this.register+1)  + " = getelementptr i8, i8* %this, i32 8\n"; // offset
+                    LLVMCodeAccumulation += "\t%_" + (this.register+2) + " = bitcast i8* %_" + (this.register+1) + " to " + typeInLLVM(methodType) +"*\n";
+                    LLVMCodeAccumulation += "\t%_" + (this.register+3) + " = load " + typeInLLVM(methodType) +", " + typeInLLVM(methodType) +"* %_" + (this.register+2) + "\n";
+                    return LLVMCodeAccumulation;
+                }
+                temp = temp.extending;
+            }
+        }
+
+        if ((String type = isVar(input)) != null) {
+            LLVMCodeAccumulation += "%_" + this.register + " = load " + typeInLLVM(type) + ", " + typeInLLVM(type) + "* %" + input;
+            this.register++;
+            return LLVMCodeAccumulation;
+        }
+
+        return null;
+    }
+
     public LLVMGenerator(SymbolTable t) {
         this.table = t;
         this.LLVMCode = "";
@@ -101,7 +137,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
             if (methodNames.contains("main")) {
                 this.LLVMCode += "@." + className + "_vtable = global [0 x i8*] [";
             } else {
-                this.LLVMCode += "@." + className + "_vtable = global [" + allMethodsNum.toString() + " x i8*] [";
+                this.LLVMCode += "@." + className + "_vtable = global [" + allMethodsNum + " x i8*] [";
             }
 
             Integer i = 0;
@@ -198,6 +234,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         for (int i = 0; i < n.f15.size(); i++) {
           LLVMCodeAccumulation += n.f15.elementAt(i).accept(this, classInstance);
         }
+        LLVMCodeAccumulation += "\tret i32 0\n";
         LLVMCodeAccumulation += "\n}";
         System.out.println(LLVMCodeAccumulation);
         return null;
@@ -272,24 +309,41 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
     * f12 -> "}"
     */
    public String visit(MethodDeclaration n, Class argu) throws Exception {
+        this.register = 0;
         String methodType = n.f1.accept(this, argu);
         String methodName = n.f2.accept(this, argu);
         this.currMethod = argu.methods.get(methodName);
         String methodParams = n.f4.accept(this, argu);
-        String toReturn = n.f10.accept(this, argu);
+        n.f10.accept(this, argu);
+        String LLVMCodeAccumulation = "";
 
         if (methodParams == null) {
             methodParams = "i8* %this";
         }
-        String LLVMCodeAccumulation = "define "+ typeInLLVM(methodType) +" @"+ argu.name + "." + methodName +"(" + methodParams + ") {\n";
+        LLVMCodeAccumulation += "define "+ typeInLLVM(methodType) +" @"+ argu.name + "." + methodName +"(" + methodParams + ") {\n";
        
-        for (int i = 0; i < n.f7.size(); i++) {
+        String[] paramsList = methodParams.split(",");
+        Integer i = 0;
+        for (String param : paramsList) {
+
+            if (i == 0) {
+                i++;
+                continue;
+            }
+            LLVMCodeAccumulation += "\t%" + ((param.trim()).split(" ")[1]).split("\\.")[1] + " = alloca " +  (param.trim()).split(" ")[0] + "\n";
+            LLVMCodeAccumulation += "\tstore " + (param.trim()).split(" ")[0] + " %." + ((param.trim()).split(" ")[1]).split("\\.")[1] + ", " +  (param.trim()).split(" ")[0] + "* " + "%" + ((param.trim()).split(" ")[1]).split("\\.")[1] + "\n";
+            i++;
+        }
+        
+        for (i = 0; i < n.f7.size(); i++) {
            LLVMCodeAccumulation += n.f7.elementAt(i).accept(this, argu);
         }
-        for (int i = 0; i < n.f8.size(); i++) {
+        for (i = 0; i < n.f8.size(); i++) {
            LLVMCodeAccumulation += n.f8.elementAt(i).accept(this, argu);
         }
-        LLVMCodeAccumulation += "\n\tret " + typeInLLVM(methodType)+ " " + toReturn;
+        Integer toReturn = this.register-1;
+
+        LLVMCodeAccumulation += "\n\tret " + typeInLLVM(methodType)+ " %_" + toReturn;
         LLVMCodeAccumulation += "\n}\n";
         return LLVMCodeAccumulation;
    }
@@ -397,12 +451,21 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         String expr = n.f2.accept(this, argu);
         Integer newObject = this.register;
         if (isVar(expr, argu) != null) {
-            expr = "\t%_" + (this.register).toString() + " = load i8*, i8** %" + expr;
+            expr = "\t%_" + (this.register) + " = load " + typeInLLVM(isVar(identifier, argu)) + ", " + typeInLLVM(isVar(identifier, argu)) + "* %" + expr + "\n";
             this.register++;
         } else {
             newObject = this.register - 3;
         }
-        return expr + "\n\tstore " + typeInLLVM(isVar(identifier, argu)) + " %_" + newObject.toString() + ", " + typeInLLVM(isVar(identifier, argu)) +"* %" + identifier + "\n";
+        Set<String> classFields = argu.fields.keySet();
+        for (String field : classFields) {
+            if (field.equals(identifier)) {
+                expr += "\t%_" +(this.register)+" = getelementptr i8, i8* %this, i32 8\n";
+                this.register++;
+                expr += "\t%_" +(this.register)+" = bitcast i8* %_1 to i32*";
+                return expr + "\n\tstore " + typeInLLVM(isVar(identifier, argu)) + " %_" + newObject + ", " + typeInLLVM(isVar(identifier, argu)) +"* %" + (this.register) + "\n";
+            }
+        }
+        return expr + "\n\tstore " + typeInLLVM(isVar(identifier, argu)) + " %_" + newObject + ", " + typeInLLVM(isVar(identifier, argu)) +"* %" + identifier + "\n";
    }
 
 //    /**
@@ -435,17 +498,17 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String stmt = n.f4.accept(this, argu);
 //         String elseStmt = n.f6.accept(this, argu);
 //         String LLVMCodeAccumulation = "";
-//         LLVMCodeAccumulation += "br i1 " + expr + ", label %if_then_" + (this.label).toString() + ", label %if_else_" + (this.label).toString() + "\n\n";
+//         LLVMCodeAccumulation += "br i1 " + expr + ", label %if_then_" + (this.label) + ", label %if_else_" + (this.label) + "\n\n";
 
-//         LLVMCodeAccumulation += "%if_then_" + (this.label).toString() + ":\n"
+//         LLVMCodeAccumulation += "%if_then_" + (this.label) + ":\n"
 //         LLVMCodeAccumulation += stmt + "\n"
-//         LLVMCodeAccumulation += "br label %if_end_" + (this.label).toString() + "\n";
+//         LLVMCodeAccumulation += "br label %if_end_" + (this.label) + "\n";
 
-//         LLVMCodeAccumulation += "%if_else_" + (this.label).toString() + ":\n"
+//         LLVMCodeAccumulation += "%if_else_" + (this.label) + ":\n"
 //         LLVMCodeAccumulation += elseStmt + "\n"
-//         LLVMCodeAccumulation += "br label %if_end_" + (this.label).toString() + "\n";
+//         LLVMCodeAccumulation += "br label %if_end_" + (this.label) + "\n";
 
-//         LLVMCodeAccumulation += "%if_end_" + (this.label).toString() + ":\n"
+//         LLVMCodeAccumulation += "%if_end_" + (this.label) + ":\n"
 //         this.label++;
 //         return LLVMCodeAccumulation;
 //    }
@@ -461,14 +524,14 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String expr = n.f2.accept(this, argu);
 //         String stmt = n.f4.accept(this, argu);
 //         String LLVMCodeAccumulation = "";
-//         LLVMCodeAccumulation += "br label %loopstart" + (this.label).toString() + "\n";
-//         LLVMCodeAccumulation += "loopstart" + (this.label).toString() + " :\n";
-//         LLVMCodeAccumulation += "%fin"+ (this.label).toString() + " = " + expr;
-//         LLVMCodeAccumulation += "br i1 %fin, label %next"+ (this.label).toString() +", label %end"+ (this.label).toString() + "\n"
-//         LLVMCodeAccumulation += "next" + (this.label).toString() + ":\n"
+//         LLVMCodeAccumulation += "br label %loopstart" + (this.label) + "\n";
+//         LLVMCodeAccumulation += "loopstart" + (this.label) + " :\n";
+//         LLVMCodeAccumulation += "%fin"+ (this.label) + " = " + expr;
+//         LLVMCodeAccumulation += "br i1 %fin, label %next"+ (this.label) +", label %end"+ (this.label) + "\n"
+//         LLVMCodeAccumulation += "next" + (this.label) + ":\n"
 //         LLVMCodeAccumulation +=  "\t" + stmt;
-//         LLVMCodeAccumulation += "br label %loopstart" + (this.label).toString() + "\n\n";
-//         LLVMCodeAccumulation += "end" + (this.label).toString() + ":\n"
+//         LLVMCodeAccumulation += "br label %loopstart" + (this.label) + "\n\n";
+//         LLVMCodeAccumulation += "end" + (this.label) + ":\n"
 //         this.label++;
 //         return LLVMCodeAccumulation;
 //    }
@@ -482,7 +545,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
     */
    public String visit(PrintStatement n, Class argu) throws Exception {
         String expr = n.f2.accept(this, argu);
-        return expr + "\tcall void (i32) @print_int(i32 %_" + (this.register++).toString() + ")\n";
+        return expr + "\tcall void (i32) @print_int(i32 %_" + (this.register++) + ")\n";
    }
 
 //    /**
@@ -494,7 +557,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String first = n.f0.accept(this, argu);
 //         String second = n.f2.accept(this, argu);
 //         this.register++;
-//         return "%_" + (this.register - 1).toString() + " = and i32 " + first + ", " + second;
+//         return "%_" + (this.register - 1) + " = and i32 " + first + ", " + second;
 //    }
 
 //    /**
@@ -506,7 +569,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String first = n.f0.accept(this, argu);
 //         String second = n.f2.accept(this, argu);
 //         this.register++;
-//         return "%_" + (this.register - 1).toString() + " = icmp slt i32 " + first + ", " + second;
+//         return "%_" + (this.register - 1) + " = icmp slt i32 " + first + ", " + second;
 //    }
 
 //    /**
@@ -518,7 +581,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String first = n.f0.accept(this, argu);
 //         String second = n.f2.accept(this, argu);
 //         this.register++;
-//         return "%_" + (this.register - 1).toString() + " = add i32 " + first + ", " + second;
+//         return "%_" + (this.register - 1) + " = add i32 " + first + ", " + second;
 //    }
 
 //    /**
@@ -530,7 +593,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String first = n.f0.accept(this, argu);
 //         String second = n.f2.accept(this, argu);
 //         this.register++;
-//         return "%_" + (this.register - 1).toString() + " = sub i32 " + first + ", " + second;
+//         return "%_" + (this.register - 1) + " = sub i32 " + first + ", " + second;
 //    }
 
 //    /**
@@ -542,7 +605,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         String first = n.f0.accept(this, argu);
 //         String second = n.f2.accept(this, argu);
 //         this.register++;
-//         return "%_" + (this.register - 1).toString() + " = mul i32 " + first + ", " + second;
+//         return "%_" + (this.register - 1) + " = mul i32 " + first + ", " + second;
 //    }
 
 //    /**
@@ -637,25 +700,25 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 
         String LLVMCodeAccumulation = "";
         Integer first = this.register;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = load i8*, i8** %" + expr + "\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8*, i8** %" + expr + "\n";
         this.register++;
         Integer second = this.register;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = bitcast i8* %_" + first.toString() +" to i8***" + "\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* %_" + first +" to i8***" + "\n";
         this.register++;
         Integer third = this.register;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = load i8**, i8*** %_" + second.toString() + "\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8**, i8*** %_" + second + "\n";
         this.register++;
         Integer forth = this.register;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = getelementptr i8*, i8** %_" + third.toString() +", i32 0" + "\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = getelementptr i8*, i8** %_" + third +", i32 0" + "\n";
         this.register++;
         Integer fifth = this.register;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = load i8*, i8** %_" + forth.toString() + "\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8*, i8** %_" + forth + "\n";
         this.register++;
         Integer sixth = this.register;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = bitcast i8* %_" + fifth.toString() + " to i32 (i8*,i32)*\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* %_" + fifth + " to i32 (i8*,i32)*\n";
         this.register++;
         Integer seventh = this.register - 6;
-        LLVMCodeAccumulation += "\t%_" + (this.register).toString() + " = call i32 %_" + sixth.toString() + "(i8* %_" + seventh.toString()  + ", i32 " + args +")\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = call i32 %_" + sixth + "(i8* %_" + seventh  + ", i32 " + args +")\n";
         return LLVMCodeAccumulation;
    }
 
@@ -729,38 +792,41 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         LLVMCodeAccumulation += "br label %nsz_ok_"+ this.label+ "\n"
 //         LLVMCodeAccumulation += "nsz_ok_"+ this.label+ ":\n"
 //         this.label++;
-//         LLVMCodeAccumulation += (this.register).toString() + " = call " + typeInLLVM("boolean[]") + " @calloc(i32 " + expr + ", i32 " + objectSize("boolean[]") + ")";
-//         LLVMCodeAccumulation += "%_" + (this.register++).toString() + " = bitcast i8* %_" + (this.register).toString() + " to i8***";
-//         LLVMCodeAccumulation += "%_" + (this.register++).toString() + " = getelementptr [2 x i8*], [2 x i8*]* @." + argu.name + "_vtable, i32 0, i32 0";
-//         LLVMCodeAccumulation += "store i8** %_" + (this.register++).toString() + ", i8*** %_" + (this.register++).toString() + "";
+//         LLVMCodeAccumulation += (this.register) + " = call " + typeInLLVM("boolean[]") + " @calloc(i32 " + expr + ", i32 1)";
+//         LLVMCodeAccumulation += "%_" + (this.register++) + " = bitcast i8* %_" + (this.register) + " to i8***";
+//         LLVMCodeAccumulation += "%_" + (this.register++) + " = getelementptr [2 x i8*], [2 x i8*]* @." + argu.name + "_vtable, i32 0, i32 0";
+//         LLVMCodeAccumulation += "store i8** %_" + (this.register++) + ", i8*** %_" + (this.register++) + "";
 //         return LLVMCodeAccumulation;
 //    }
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> "int"
-//     * f2 -> "["
-//     * f3 -> Expression()
-//     * f4 -> "]"
-//     */
-//    public String visit(IntegerArrayAllocationExpression n, Class argu) throws Exception {
-//         String expr = n.f3.accept(this, argu);
-//         String LLVMCodeAccumulation = "";
-//         LLVMCodeAccumulation += "%_" + this.register + " = add i32 1, 2\n"
-//         this.register++;
-//         LLVMCodeAccumulation += "%_" + this.register + " = icmp sge i32 %_0, 1\n"
-//         LLVMCodeAccumulation += "br i1 %_" + this.register + ", label %nsz_ok_"+ this.label+ ", label %nsz_err_"+ this.label+ "\n"
-//         LLVMCodeAccumulation += "nsz_err_"+ this.label+ ":\n"
-//         LLVMCodeAccumulation += "call void @throw_nsz()\n"
-//         LLVMCodeAccumulation += "br label %nsz_ok_"+ this.label+ "\n"
-//         LLVMCodeAccumulation += "nsz_ok_"+ this.label+ ":\n"
-//         this.label++;
-//         LLVMCodeAccumulation += (this.register).toString() + " = call " + typeInLLVM("boolean[]") + " @calloc(i32 " + expr + ", i32 " + objectSize("boolean[]") + ")";
-//         LLVMCodeAccumulation += "%_" + (this.register++).toString() + " = bitcast i8* %_" + (this.register).toString() + " to i8***";
-//         LLVMCodeAccumulation += "%_" + (this.register++).toString() + " = getelementptr [2 x i8*], [2 x i8*]* @." + argu.name + "_vtable, i32 0, i32 0";
-//         LLVMCodeAccumulation += "store i8** %_" + (this.register++).toString() + ", i8*** %_" + (this.register++).toString() + "";
-//         return LLVMCodeAccumulation;
-//    }
+   /**
+    * f0 -> "new"
+    * f1 -> "int"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+   public String visit(IntegerArrayAllocationExpression n, Class argu) throws Exception {
+        String expr = n.f3.accept(this, argu); // register or number
+        String LLVMCodeAccumulation = "";
+        LLVMCodeAccumulation += "%_" + this.register + " = add i32 1, " + expr + "\n";
+        this.register++;
+        LLVMCodeAccumulation += "%_" + this.register + " = icmp sge i32 %_" + (this.register - 1) +", 1\n";
+        LLVMCodeAccumulation += "br i1 %_" + (this.register - 1) + ", label %nsz_ok_"+ this.label+ ", label %nsz_err_"+ this.label+ "\n\n";
+        LLVMCodeAccumulation += "nsz_err_"+ this.label+ ":\n";
+        LLVMCodeAccumulation += "call void @throw_nsz()\n";
+        LLVMCodeAccumulation += "br label %nsz_ok_"+ this.label+ "\n\n";
+        LLVMCodeAccumulation += "nsz_ok_"+ this.label+ ":\n";
+        LLVMCodeAccumulation += "%_" + (this.register) + " = call " + typeInLLVM("int[]") + " @calloc(i32 %_" + expr + ", i32 4)\n";
+
+        this.label++;
+        // LLVMCodeAccumulation += "%_" + (this.register++) + " = bitcast i8* %_" + (this.register) + " to i8***\n";
+        // LLVMCodeAccumulation += "%_" + (this.register++) + " = getelementptr [2 x i8*], [2 x i8*]* @." + argu.name + "_vtable, i32 0, i32 0\n";
+        // LLVMCodeAccumulation += "store i8** %_" + (this.register++) + ", i8*** %_" + (this.register++) + "\n";
+        // return LLVMCodeAccumulation;
+        System.out.println(LLVMCodeAccumulation);
+        return null;
+   }
 
    /**
     * f0 -> "new"
@@ -773,10 +839,10 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         Integer prev = this.register;
         Integer next = this.register + 1;
         Integer nextnext = this.register + 2;
-        String LLVMCodeAccumulation = "\t%_" + (prev).toString() + " = call " + typeInLLVM(type) + " @calloc(i32 1, i32 " + objectSize(type) + ")\n";
-        LLVMCodeAccumulation += "\t%_" + (next).toString() + " = bitcast i8* %_" + (prev).toString() + " to i8***\n";
-        LLVMCodeAccumulation += "\t%_" + (nextnext).toString() + " = getelementptr [2 x i8*], [2 x i8*]* @." + type + "_vtable, i32 0, i32 0\n";
-        LLVMCodeAccumulation += "\tstore i8** %_" + (nextnext).toString() + ", i8*** %_" + (next).toString() + "";
+        String LLVMCodeAccumulation = "\t%_" + (prev) + " = call " + typeInLLVM(type) + " @calloc(i32 1, i32 " + objectSize(type) + ")\n";
+        LLVMCodeAccumulation += "\t%_" + (next) + " = bitcast i8* %_" + (prev) + " to i8***\n";
+        LLVMCodeAccumulation += "\t%_" + (nextnext) + " = getelementptr [2 x i8*], [2 x i8*]* @." + type + "_vtable, i32 0, i32 0\n";
+        LLVMCodeAccumulation += "\tstore i8** %_" + (nextnext) + ", i8*** %_" + (next) + "";
         this.register += 3;
 		return LLVMCodeAccumulation;
    }
@@ -788,7 +854,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //    public String visit(NotExpression n, Class argu) throws Exception {
 //         String clause = n.f1.accept(this, argu);
 //         this.register++;
-//         return "%_"+ (this.register-1).toString() +" = xor i1 1, " + clause;
+//         return "%_"+ (this.register-1) +" = xor i1 1, " + clause;
 //    }
 
 //     /**
@@ -796,7 +862,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //     */
 //    public String visit(ThisExpression n, Class argu) throws Exception {
 //         this.register += 2;
-//         return "%_"+ (this.register-2).toString() + " = bitcast i8* %this to i8***\n" + (this.register-1).toString() + " = load i8**, i8***" + (this.register-2).toString() + "\n";
+//         return "%_"+ (this.register-2) + " = bitcast i8* %this to i8***\n" + (this.register-1) + " = load i8**, i8***" + (this.register-2) + "\n";
 //    }
 
 //    /**
