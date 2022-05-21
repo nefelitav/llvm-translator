@@ -84,7 +84,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         return null;
     }
 
-    public String Accumulator(String input, Class currClass) {
+    public String Accumulator(String input, Class currClass, String side) {
         if (input.equals("true")) {
             return "1";
         }
@@ -96,13 +96,14 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         }
         if (currClass.fields.get(input) != null) {
             String fieldType = currClass.fields.get(input).type;
-            if (this.register == 0) {
-                this.register--;
-            }
             LLVMCodeAccumulation +=	"\n\t%_" + (this.register+1)  + " = getelementptr i8, i8* %this, i32 8\n"; // offset
             LLVMCodeAccumulation += "\t%_" + (this.register+2) + " = bitcast i8* %_" + (this.register+1) + " to " + typeInLLVM(fieldType) +"*\n";
-            LLVMCodeAccumulation += "\t%_" + (this.register+3) + " = load " + typeInLLVM(fieldType) +", " + typeInLLVM(fieldType) +"* %_" + (this.register+2) + "\n";
-            this.register += 3;
+            if (side == "right") {
+                LLVMCodeAccumulation += "\t%_" + (this.register+3) + " = load " + typeInLLVM(fieldType) +", " + typeInLLVM(fieldType) +"* %_" + (this.register+2) + "\n";
+                this.register += 3;
+            } else {
+                this.register += 2;
+            }
             return "%_" + this.register;
         }
 
@@ -111,13 +112,14 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
             while(temp != null) {
                 if (temp.fields.get(input) != null) {
                     String fieldType = temp.fields.get(input).type;
-                    if (this.register == 0) {
-                        this.register--;
-                    }
                     LLVMCodeAccumulation +=	"\n\t%_" + (this.register+1)  + " = getelementptr i8, i8* %this, i32 8\n"; // offset
                     LLVMCodeAccumulation += "\t%_" + (this.register+2) + " = bitcast i8* %_" + (this.register+1) + " to " + typeInLLVM(fieldType) +"*\n";
-                    LLVMCodeAccumulation += "\t%_" + (this.register+3) + " = load " + typeInLLVM(fieldType) +", " + typeInLLVM(fieldType) +"* %_" + (this.register+2) + "\n";
-                    this.register += 3;
+                    if (side == "right") {
+                        LLVMCodeAccumulation += "\t%_" + (this.register+3) + " = load " + typeInLLVM(fieldType) +", " + typeInLLVM(fieldType) +"* %_" + (this.register+2) + "\n";
+                        this.register += 3;
+                    } else {
+                        this.register += 2;
+                    }
                     return "%_" + this.register;
                 }
                 temp = temp.extending;
@@ -125,8 +127,12 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         }
         String type;
         if ((type = isVar(input, currClass)) != null) {
-            LLVMCodeAccumulation += "\t%_" + this.register + " = load " + typeInLLVM(type) + ", " + typeInLLVM(type) + "* %" + input;
-            return "%_" + this.register;
+            if (side == "right") {
+                LLVMCodeAccumulation += "\t%_" + this.register + " = load " + typeInLLVM(type) + ", " + typeInLLVM(type) + "* %" + input + "\n";
+                return "%_" + this.register;
+            } else {
+                return "%" + input;
+            }
         }
         return input;
     }
@@ -356,7 +362,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         }
 
         LLVMCodeAccumulation += "\n";
-        String exprToLLVM = Accumulator(expr, argu);
+        String exprToLLVM = Accumulator(expr, argu, "right");
         LLVMCodeAccumulation += "\n\tret " + typeInLLVM(methodType) + " " + exprToLLVM + "\n";
         LLVMCodeAccumulation += "\n}\n\n";
         return null;
@@ -455,53 +461,37 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         return n.f0.toString();
     }
 
-//    /**
-//     * f0 -> Identifier()
-//     * f1 -> "="
-//     * f2 -> Expression()
-//     * f3 -> ";"
-//     */
-//    public String visit(AssignmentStatement n, Class argu) throws Exception {
-//         // b = new Base();
-//         String identifier = n.f0.accept(this, argu);
-//         String expr = n.f2.accept(this, argu);
-//         String exprToLLVM = Accumulator(expr, argu); // if expr is field -> get this etc, else if var -> load
-//         String identifierToLLVM = Accumulator(identifier, argu); // if identifier is field -> get this etc, else if var -> load
 
-//         // check if identifier is field
-//         boolean f = false; 
-//         if (argu.fields.get(identifier) == null) {
-//             if (argu.extending != null) {
-//                 Class temp = argu.extending;
-//                 while(temp != null) {
-//                     if (temp.fields.get(identifier) != null) {
-//                         f = true;
-//                         break;
-//                     }
-//                     temp = temp.extending;
-//                 }
-//                 if (f == false) {
-//                     identifierToLLVM = "";
-//                 }
-//             } else {
-//                 identifierToLLVM = "";
-//             }
-//         } 
-        
-//         if ((f == false) && (isVar(identifier, argu) != null)) { // identifier is variable
-//             LLVMCodeAccumulation += exprToLLVM + "\n" + identifierToLLVM;
-//             LLVMCodeAccumulation += "\n\t>>store " + typeInLLVM(isVar(identifier, argu)) + " %_" + (this.register-3) + ", " + typeInLLVM(isVar(identifier, argu)) +"* %" + identifier + "\n";
-//             return LLVMCodeAccumulation;
-//         }
+   /**
+    * f0 -> "new"
+    * f1 -> Identifier()
+    * f2 -> "("
+    * f3 -> ")"
+    */
+   public String visit(AllocationExpression n, Class argu) throws Exception {
+        String type = n.f1.accept(this, argu);
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = call " + typeInLLVM(type) + " @calloc(i32 1, i32 " + objectSize(type) + ")\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register + 1) + " = bitcast i8* %_" + (this.register) + " to i8***\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register + 2) + " = getelementptr [2 x i8*], [2 x i8*]* @." + type + "_vtable, i32 0, i32 0\n";
+        LLVMCodeAccumulation += "\tstore i8** %_" + (this.register + 2) + ", i8*** %_" + (this.register + 1) + "\n";
+        this.register += 3;
+		return "%_" + (this.register - 3);
+   }
 
-//         if (exprToLLVM.chars().allMatch( Character::isDigit )) {
-//             return "\n\t<<store " + typeInLLVM(isVar(identifier, argu)) + " " + exprToLLVM + ", " + typeInLLVM(isVar(identifier, argu)) +"* %_" + this.register + "\n" + identifierToLLVM;
-//         } else {
-//             LLVMCodeAccumulation += exprToLLVM + "\n" + identifierToLLVM;
-//             LLVMCodeAccumulation += "\n\t!!store " + typeInLLVM(isVar(identifier, argu)) + " %_" + (this.register-4) + ", " + typeInLLVM(isVar(identifier, argu)) +"* %" + identifier + "\n";
-//         }
-//         return null;
-//    }
+   /**
+    * f0 -> Identifier()
+    * f1 -> "="
+    * f2 -> Expression()
+    * f3 -> ";"
+    */
+   public String visit(AssignmentStatement n, Class argu) throws Exception {
+        String identifier = n.f0.accept(this, argu);
+        String expr = n.f2.accept(this, argu);
+        String exprToLLVM = Accumulator(expr, argu, "right"); 
+        String identifierToLLVM = Accumulator(identifier, argu, "left"); 
+        LLVMCodeAccumulation += "\tstore " + typeInLLVM(isVar(identifier, argu)) + " " + exprToLLVM + ", " + typeInLLVM(isVar(identifier, argu)) +"* " + identifierToLLVM + "\n";
+        return null;
+   }
 
 //    /**
 //     * f0 -> Identifier()
@@ -865,21 +855,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         return null;
 //    }
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> Identifier()
-//     * f2 -> "("
-//     * f3 -> ")"
-//     */
-//    public String visit(AllocationExpression n, Class argu) throws Exception {
-//         String type = n.f1.accept(this, argu);
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = call " + typeInLLVM(type) + " @calloc(i32 1, i32 " + objectSize(type) + ")\n";
-//         LLVMCodeAccumulation += "\t%_" + (this.register + 1) + " = bitcast i8* %_" + (this.register) + " to i8***\n";
-//         LLVMCodeAccumulation += "\t%_" + (this.register + 2) + " = getelementptr [2 x i8*], [2 x i8*]* @." + type + "_vtable, i32 0, i32 0\n";
-//         LLVMCodeAccumulation += "\tstore i8** %_" + (this.register + 2) + ", i8*** %_" + (this.register + 1) + "";
-//         this.register += 3;
-// 		return LLVMCodeAccumulation;
-//    }
+
 
 //    /**
 //     * f0 -> "!"
