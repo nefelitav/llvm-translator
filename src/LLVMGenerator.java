@@ -129,6 +129,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         if ((type = isVar(input, currClass)) != null) {
             if (side == "right") {
                 LLVMCodeAccumulation += "\t%_" + this.register + " = load " + typeInLLVM(type) + ", " + typeInLLVM(type) + "* %" + input + "\n";
+                this.register++;
                 return "%_" + this.register;
             } else {
                 return "%" + input;
@@ -509,274 +510,259 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 //         return null;
 //    }
 
-//    /**
-//     * f0 -> "if"
-//     * f1 -> "("
-//     * f2 -> Expression()
-//     * f3 -> ")"
-//     * f4 -> Statement()
-//     * f5 -> "else"
-//     * f6 -> Statement()
-//     */
-//    public String visit(IfStatement n, Class argu) throws Exception {
-//         String expr = n.f2.accept(this, argu);
-//         String stmt = n.f4.accept(this, argu);
-//         String elseStmt = n.f6.accept(this, argu);
-//         LLVMCodeAccumulation += "br i1 " + expr + ", label %if_then_" + (this.label) + ", label %if_else_" + (this.label) + "\n\n";
+   /**
+    * f0 -> "if"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    * f5 -> "else"
+    * f6 -> Statement()
+    */
+   public String visit(IfStatement n, Class argu) throws Exception {
+        String expr = n.f2.accept(this, argu);
+        String exprToLLVM = Accumulator(expr, argu, "right"); 
+        LLVMCodeAccumulation += "\tbr i1 " + exprToLLVM + ", label %if_then_" + (this.label) + ", label %if_else_" + (this.label) + "\n\n";
 
-//         LLVMCodeAccumulation += "%if_then_" + (this.label) + ":\n"
-//         LLVMCodeAccumulation += stmt + "\n"
-//         LLVMCodeAccumulation += "br label %if_end_" + (this.label) + "\n";
+        LLVMCodeAccumulation += "\n\tif_then_" + (this.label) + ":\n";
+        String stmt = n.f4.accept(this, argu);
+        LLVMCodeAccumulation += "\tbr label %if_end_" + (this.label) + "\n";
 
-//         LLVMCodeAccumulation += "%if_else_" + (this.label) + ":\n"
-//         LLVMCodeAccumulation += elseStmt + "\n"
-//         LLVMCodeAccumulation += "br label %if_end_" + (this.label) + "\n";
+        LLVMCodeAccumulation += "\n\tif_else_" + (this.label) + ":\n";
+        String elseStmt = n.f6.accept(this, argu);
+        LLVMCodeAccumulation += "\tbr label %if_end_" + (this.label) + "\n";
 
-//         LLVMCodeAccumulation += "%if_end_" + (this.label) + ":\n"
-//         this.label++;
-//         return null;
-//    }
+        LLVMCodeAccumulation += "\n\tif_end_" + (this.label) + ":\n";
+        this.label++;
+        return null;
+   }
 
-//    /**
-//     * f0 -> "while"
-//     * f1 -> "("
-//     * f2 -> Expression()
-//     * f3 -> ")"
-//     * f4 -> Statement()
-//     */
-//    public String visit(WhileStatement n, Class argu) throws Exception {
-//         String expr = n.f2.accept(this, argu);
-//         String stmt = n.f4.accept(this, argu);
-//         LLVMCodeAccumulation += "br label %loopstart" + (this.label) + "\n";
-//         LLVMCodeAccumulation += "loopstart" + (this.label) + " :\n";
-//         LLVMCodeAccumulation += "%fin"+ (this.label) + " = " + expr;
-//         LLVMCodeAccumulation += "br i1 %fin, label %next"+ (this.label) +", label %end"+ (this.label) + "\n"
-//         LLVMCodeAccumulation += "next" + (this.label) + ":\n"
-//         LLVMCodeAccumulation +=  "\t" + stmt;
-//         LLVMCodeAccumulation += "br label %loopstart" + (this.label) + "\n\n";
-//         LLVMCodeAccumulation += "end" + (this.label) + ":\n"
-//         this.label++;
-//         return LLVMCodeAccumulation;
-//    }
+   /**
+    * f0 -> "while"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    */
+   public String visit(WhileStatement n, Class argu) throws Exception {
+        LLVMCodeAccumulation += "\tbr label %loopstart" + (this.label) + "\n";
+        LLVMCodeAccumulation += "\n\tloopstart" + (this.label) + " :\n";
+        String expr = n.f2.accept(this, argu);
+        String exprToLLVM = Accumulator(expr, argu, "right"); 
+        LLVMCodeAccumulation += "\tbr i1 " + exprToLLVM + ", label %next"+ (this.label) +", label %end"+ (this.label) + "\n";
+        LLVMCodeAccumulation += "\n\tnext" + (this.label) + ":\n";
+        n.f4.accept(this, argu);
+        LLVMCodeAccumulation += "\tbr label %loopstart" + (this.label) + "\n\n";
+        LLVMCodeAccumulation += "\n\tend" + (this.label) + ":\n";
+        this.label++;
+        return LLVMCodeAccumulation;
+   }
 
-//    /**
-//     * f0 -> "System.out.println"
-//     * f1 -> "("
-//     * f2 -> Expression()
-//     * f3 -> ")"
-//     * f4 -> ";"
-//     */
-//    public String visit(PrintStatement n, Class argu) throws Exception {
-//         String expr = n.f2.accept(this, argu);
-//         LLVMCodeAccumulation += expr + "\tcall void (i32) @print_int(i32 %_" + (this.register++) + ")\n";
-//         return null;
-//    }
+   /**
+    * f0 -> "System.out.println"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> ";"
+    */
+   public String visit(PrintStatement n, Class argu) throws Exception {
+        String expr = n.f2.accept(this, argu);
+        String exprToLLVM = Accumulator(expr, argu, "right"); 
+        LLVMCodeAccumulation +=  "\tcall void (i32) @print_int(i32 " + exprToLLVM + ")\n";
+        this.register++;
+        return null;
+   }
 
-//    /**
-//     * f0 -> Clause()
-//     * f1 -> "&&"
-//     * f2 -> Clause()
-//     */
-//    public String visit(AndExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         this.register++;
-//         LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = and i32 " + first + ", " + second;
-//         return null;
-//    }
+   /**
+    * f0 -> Clause()
+    * f1 -> "&&"
+    * f2 -> Clause()
+    */
+   public String visit(AndExpression n, Class argu) throws Exception {
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        String firstToLLVM = Accumulator(first, argu, "right");
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "<"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(CompareExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         this.register++;
-//         LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = icmp slt i32 " + first + ", " + second;
-//         return null
-//    }
+        LLVMCodeAccumulation += "\tbr i1 " + firstToLLVM + ", label %exp_res_" + (this.label+1) + ", label %exp_res_" + this.label + "\n";
+        LLVMCodeAccumulation += "\n\texp_res_" + this.label + ":\n";
+        LLVMCodeAccumulation += "\tbr label %exp_res_" + (this.label+3) + "\n";
+        LLVMCodeAccumulation += "\n\texp_res_" + (this.label+1) + ":\n";
+        String secondToLLVM = Accumulator(second, argu, "right");
+        LLVMCodeAccumulation += "\tbr label %exp_res_" + (this.label+2) + "\n";
+        LLVMCodeAccumulation += "\n\texp_res_" + (this.label+2) + ":\n";
+        LLVMCodeAccumulation += "\tbr label %exp_res_" + (this.label+3) + "\n";
+        this.register++;
+        LLVMCodeAccumulation += "\n\texp_res_" + (this.label+3) + ":\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register++) + " = phi i1  [ 0, %exp_res_" + this.label + " ], [ " + secondToLLVM + ", %exp_res_" + this.label+2 + " ]\n";
+        this.register++;
+        this.label += 3;
+        return "%_" + (this.register-1);
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "+"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(PlusExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         this.register++;
-//         LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = add i32 " + first + ", " + second;
-//         return null;
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "<"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(CompareExpression n, Class argu) throws Exception {
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        String firstToLLVM = Accumulator(first, argu, "right");
+        String secondToLLVM = Accumulator(second, argu, "right");
+        this.register++;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = icmp slt i32 " + firstToLLVM + ", " + secondToLLVM + "\n";
+        return "%_" + this.register;
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "-"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(MinusExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         this.register++;
-//         LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = sub i32 " + first + ", " + second;
-//         return null;
-//    }
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "*"
-//     * f2 -> PrimaryExpression()
-//     */
-//    public String visit(TimesExpression n, Class argu) throws Exception {
-//         String first = n.f0.accept(this, argu);
-//         String second = n.f2.accept(this, argu);
-//         this.register++;
-//         LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = mul i32 " + first + ", " + second;
-//         return null;
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "+"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(PlusExpression n, Class argu) throws Exception {
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        String firstToLLVM = Accumulator(first, argu, "right");
+        String secondToLLVM = Accumulator(second, argu, "right");
+        this.register++;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = add i32 " + firstToLLVM + ", " + secondToLLVM + "\n";
+        return "%_" + this.register;
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "["
-//     * f2 -> PrimaryExpression()
-//     * f3 -> "]"
-//     */
-//    public String visit(ArrayLookup n, Class argu) throws Exception {
-//        String expr = n.f0.accept(this, argu);
-//        String expr2 = n.f2.accept(this, argu);
-//        if (expr.equals("int[]")) {
-//            if (expr2.equals("int")) {
-//                return "int";
-//            } else {
-//                String type2 = isVar(expr2, argu);
-//                if (type2.equals("int")) {
-//                    return "int";
-//                } else {
-//                     throw new Exception("Index should be integer");
-//                }
-//            }
-//        } else if (expr.equals("boolean[]")) {
-//            if (expr2.equals("int")) {
-//                return "boolean";
-//            } else {
-//                String type2 = isVar(expr2, argu);
-//                if (type2.equals("int")) {
-//                    return "boolean";
-//                } else {
-//                     throw new Exception("Index should be integer");
-//                }
-//            }
-//        } else {
-//            String type = isVar(expr, argu);
-//             if (type.equals("int[]")) {
-//                if (expr2.equals("int")) {
-//                     return "int";
-//                 } else {
-//                     String type2 = isVar(expr2, argu);
-//                     if (type2.equals("int")) {
-//                         return "int";
-//                     } else {
-//                             throw new Exception("Index should be integer");
-//                     }
-//                 }
-//             } else if (type.equals("boolean[]")) {
-//                if (expr2.equals("int")) {
-//                     return "boolean";
-//                 } else {
-//                     String type2 = isVar(expr2, argu);
-//                     if (type2.equals("int")) {
-//                         return "int";
-//                     } else {
-//                             throw new Exception("Index should be integer");
-//                     }
-//                 }
-//             } else {
-//                 throw new Exception("Cannot index a non array Class");
-//             }
-//        }
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "-"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(MinusExpression n, Class argu) throws Exception {
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        String firstToLLVM = Accumulator(first, argu, "right");
+        String secondToLLVM = Accumulator(second, argu, "right");
+        this.register++;
+        LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = sub i32 " + firstToLLVM + ", " + secondToLLVM + "\n";
+        return "%_" + this.register;
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "."
-//     * f2 -> "length"
-//     */
-//    public String visit(ArrayLength n, Class argu) throws Exception {
-//         String expr = n.f0.accept(this, argu);
-//         if (!expr.equals("int[]") && !expr.equals("boolean[]")) { // basic array type
-//             String type = isVar(expr, argu);    // identifier of basic array type
-//             if (!type.equals("int[]") && !type.equals("boolean[]")) {
-//                 throw new Exception("Cannot find the length of a non array Class");
-//             }
-//         }
-//         return "int";
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "*"
+    * f2 -> PrimaryExpression()
+    */
+   public String visit(TimesExpression n, Class argu) throws Exception {
+        String first = n.f0.accept(this, argu);
+        String second = n.f2.accept(this, argu);
+        String firstToLLVM = Accumulator(first, argu, "right");
+        String secondToLLVM = Accumulator(second, argu, "right");
+        this.register++;
+        LLVMCodeAccumulation += "\t%_" + (this.register - 1) + " = mul i32 " + firstToLLVM + ", " + secondToLLVM + "\n";
+        return "%_" + this.register;
+   }
 
-//    /**
-//     * f0 -> PrimaryExpression()
-//     * f1 -> "."
-//     * f2 -> Identifier()
-//     * f3 -> "("
-//     * f4 -> ( ExpressionList() )?
-//     * f5 -> ")"
-//     */
-//    public String visit(MessageSend n, Class argu) throws Exception {
-//         String expr = n.f0.accept(this, argu);
-//         String method = n.f2.accept(this, argu);
-//         String args = n.f4.accept(this, argu);
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "["
+    * f2 -> PrimaryExpression()
+    * f3 -> "]"
+    */
+   public String visit(ArrayLookup n, Class argu) throws Exception {
+       String expr = n.f0.accept(this, argu);
+       String expr2 = n.f2.accept(this, argu);
+       String exprToLLVM = Accumulator(expr, argu, "right");
+       String expr2ToLLVM = Accumulator(expr2, argu, "right");
 
-//         Integer first = this.register;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8*, i8** %" + expr + "\n";
-//         this.register++;
-//         Integer second = this.register;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* %_" + first +" to i8***" + "\n";
-//         this.register++;
-//         Integer third = this.register;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8**, i8*** %_" + second + "\n";
-//         this.register++;
-//         Integer forth = this.register;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = getelementptr i8*, i8** %_" + third +", i32 0" + "\n";
-//         this.register++;
-//         Integer fifth = this.register;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8*, i8** %_" + forth + "\n";
-//         this.register++;
-//         Integer sixth = this.register;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* %_" + fifth + " to i32 (i8*,i32)*\n";
-//         this.register++;
-//         Integer seventh = this.register - 6;
-//         LLVMCodeAccumulation += "\t%_" + (this.register) + " = call i32 %_" + sixth + "(i8* %_" + seventh  + ", i32 " + args +")\n";
-//         return null;
-//    }
+       LLVMCodeAccumulation += "\t%_18 = load i32*, i32** " + exprToLLVM + "\n";
+       LLVMCodeAccumulation += "\t%_19 = load i32, i32* %_18\n";
+       LLVMCodeAccumulation += "\t%_20 = icmp sge i32 0, 0\n";
+       LLVMCodeAccumulation += "\t%_21 = icmp slt i32 0, %_19\n";
+       LLVMCodeAccumulation += "\t%_22 = and i1 %_20, %_21\n";
+       LLVMCodeAccumulation += "\tbr i1 %_22, label %oob_ok_2, label %oob_err_2\n";
+       LLVMCodeAccumulation += "\toob_err_2:\n";
+       LLVMCodeAccumulation += "\tcall void @throw_oob()\n";
+       LLVMCodeAccumulation += "\toob_ok_2:\n";
+       LLVMCodeAccumulation += "\t%_23 = add i32 1, 0\n";
+       LLVMCodeAccumulation += "\t%_24 = getelementptr i32, i32* %_18, i32 %_23\n";
+       LLVMCodeAccumulation += "\t%_25 = load i32, i32* %_24\n";
+       this.register++;
+   }
 
-//    /**
-//     * f0 -> Expression()
-//     * f1 -> ExpressionTail()
-//     */
-//    public String visit(ExpressionList n, Class argu) throws Exception {
-//        return n.f0.accept(this, argu) + n.f1.accept(this, argu);
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> "length"
+    */
+   public String visit(ArrayLength n, Class argu) throws Exception {
+        String expr = n.f0.accept(this, argu);
+        String exprToLLVM = Accumulator(expr, argu, "right");
+        LLVMCodeAccumulation += "\t%_" + (this.register+1) + " = load i32, i32* " + exprToLLVM + "\n";
+        this.register++;
+        return "$_" + (this.register);
 
-//    /**
-//     * f0 -> ( ExpressionTerm() )*
-//     */
-//    public String visit(ExpressionTail n, Class argu) throws Exception {
-//       String tail = "";
-//         for (int i = 0; i < n.f0.size(); i++) {
-//             String param = n.f0.elementAt(i).accept(this, argu);
-//             tail = tail + param;
-//         }
-//         return tail;
-//    }
+   }
 
-//    /**
-//     * f0 -> ","
-//     * f1 -> Expression()
-//     */
-//    public String visit(ExpressionTerm n, Class argu) throws Exception {
-//        return "," + n.f1.accept(this, argu);
-//    }
+   /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( ExpressionList() )?
+    * f5 -> ")"
+    */
+   public String visit(MessageSend n, Class argu) throws Exception {
+        String expr = n.f0.accept(this, argu);
+        String method = n.f2.accept(this, argu);
+        String args = n.f4.accept(this, argu);
+        Integer first = this.register;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8*, i8** %" + expr + "\n";
+        this.register++;
+        Integer second = this.register;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* %_" + first +" to i8***" + "\n";
+        this.register++;
+        Integer third = this.register;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8**, i8*** %_" + second + "\n";
+        this.register++;
+        Integer forth = this.register;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = getelementptr i8*, i8** %_" + third +", i32 0" + "\n";
+        this.register++;
+        Integer fifth = this.register;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8*, i8** %_" + forth + "\n";
+        this.register++;
+        Integer sixth = this.register;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* %_" + fifth + " to i32 (i8*,i32)*\n";
+        this.register++;
+        Integer seventh = this.register - 6;
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = call i32 %_" + sixth + "(i8* %_" + seventh  + ", i32 " + args +")\n";
+        return "%_" + this.register;
+   }
+
+   /**
+    * f0 -> Expression()
+    * f1 -> ExpressionTail()
+    */
+   public String visit(ExpressionList n, Class argu) throws Exception {
+       return n.f0.accept(this, argu) + n.f1.accept(this, argu);
+   }
+
+   /**
+    * f0 -> ( ExpressionTerm() )*
+    */
+   public String visit(ExpressionTail n, Class argu) throws Exception {
+      String tail = "";
+        for (int i = 0; i < n.f0.size(); i++) {
+            String param = n.f0.elementAt(i).accept(this, argu);
+            tail = tail + param;
+        }
+        return tail;
+   }
+
+   /**
+    * f0 -> ","
+    * f1 -> Expression()
+    */
+   public String visit(ExpressionTerm n, Class argu) throws Exception {
+       return "," + n.f1.accept(this, argu);
+   }
 
 
    /**
@@ -801,93 +787,83 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
    }
 
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> "boolean"
-//     * f2 -> "["
-//     * f3 -> Expression()
-//     * f4 -> "]"
-//     */
-//    public String visit(BooleanArrayAllocationExpression n, Class argu) throws Exception {
-//         String expr = n.f3.accept(this, argu);
-//         
-//         LLVMCodeAccumulation += "%_" + this.register + " = add i32 1, 2\n"
-//         this.register++;
-//         LLVMCodeAccumulation += "%_" + this.register + " = icmp sge i32 %_0, 1\n"
-//         LLVMCodeAccumulation += "br i1 %_" + this.register + ", label %nsz_ok_"+ this.label+ ", label %nsz_err_"+ this.label+ "\n"
-//         LLVMCodeAccumulation += "nsz_err_"+ this.label+ ":\n"
-//         LLVMCodeAccumulation += "call void @throw_nsz()\n"
-//         LLVMCodeAccumulation += "br label %nsz_ok_"+ this.label+ "\n"
-//         LLVMCodeAccumulation += "nsz_ok_"+ this.label+ ":\n"
-//         this.label++;
-//         LLVMCodeAccumulation += (this.register) + " = call " + typeInLLVM("boolean[]") + " @calloc(i32 " + expr + ", i32 1)";
-//         LLVMCodeAccumulation += "%_" + (this.register++) + " = bitcast i8* %_" + (this.register) + " to i8***";
-//         LLVMCodeAccumulation += "%_" + (this.register++) + " = getelementptr [2 x i8*], [2 x i8*]* @." + argu.name + "_vtable, i32 0, i32 0";
-//         LLVMCodeAccumulation += "store i8** %_" + (this.register++) + ", i8*** %_" + (this.register++) + "";
-//         return LLVMCodeAccumulation;
-//    }
+   /**
+    * f0 -> "new"
+    * f1 -> "boolean"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+   public String visit(BooleanArrayAllocationExpression n, Class argu) throws Exception {
+        String expr = n.f3.accept(this, argu); 
+        String exprToLLVM = Accumulator(expr, argu, "right");
 
-//    /**
-//     * f0 -> "new"
-//     * f1 -> "int"
-//     * f2 -> "["
-//     * f3 -> Expression()
-//     * f4 -> "]"
-//     */
-//    public String visit(IntegerArrayAllocationExpression n, Class argu) throws Exception {
-//         String expr = n.f3.accept(this, argu); // register or number
-//         LLVMCodeAccumulation += "%_" + this.register + " = add i32 1, " + expr + "\n";
-//         this.register++;
-//         LLVMCodeAccumulation += "%_" + this.register + " = icmp sge i32 %_" + (this.register - 1) +", 1\n";
-//         LLVMCodeAccumulation += "br i1 %_" + (this.register - 1) + ", label %nsz_ok_"+ this.label+ ", label %nsz_err_"+ this.label+ "\n\n";
-//         LLVMCodeAccumulation += "nsz_err_"+ this.label+ ":\n";
-//         LLVMCodeAccumulation += "call void @throw_nsz()\n";
-//         LLVMCodeAccumulation += "br label %nsz_ok_"+ this.label+ "\n\n";
-//         LLVMCodeAccumulation += "nsz_ok_"+ this.label+ ":\n";
-//         LLVMCodeAccumulation += "%_" + (this.register) + " = call " + typeInLLVM("int[]") + " @calloc(i32 %_" + expr + ", i32 4)\n";
+        LLVMCodeAccumulation += "\t%_" + this.register + " = add i32 1, " + exprToLLVM + "\n";
+        this.register++;
+        LLVMCodeAccumulation += "\t%_" + this.register + " = icmp sge i32 %_" + (this.register - 1) +", 1\n";
+        LLVMCodeAccumulation += "\tbr i1 %_" + (this.register - 1) + ", label %nsz_ok_"+ this.label+ ", label %nsz_err_"+ this.label+ "\n\n";
+        LLVMCodeAccumulation += "\tnsz_err_"+ this.label+ ":\n";
+        LLVMCodeAccumulation += "\tcall void @throw_nsz()\n";
+        LLVMCodeAccumulation += "\tbr label %nsz_ok_"+ this.label+ "\n\n";
+        LLVMCodeAccumulation += "\tnsz_ok_"+ this.label+ ":\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = call " + typeInLLVM("boolean[]") + " @calloc(i32 %_" + exprToLLVM + ", i32 1)\n";
+        this.label++;
+        return "%_" + (this.register);
+   }
 
-//         this.label++;
-//         // LLVMCodeAccumulation += "%_" + (this.register++) + " = bitcast i8* %_" + (this.register) + " to i8***\n";
-//         // LLVMCodeAccumulation += "%_" + (this.register++) + " = getelementptr [2 x i8*], [2 x i8*]* @." + argu.name + "_vtable, i32 0, i32 0\n";
-//         // LLVMCodeAccumulation += "store i8** %_" + (this.register++) + ", i8*** %_" + (this.register++) + "\n";
-//         // return LLVMCodeAccumulation;
-//         // System.out.println(LLVMCodeAccumulation);
-//         return null;
-//    }
+   /**
+    * f0 -> "new"
+    * f1 -> "int"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+   public String visit(IntegerArrayAllocationExpression n, Class argu) throws Exception {
+        String expr = n.f3.accept(this, argu); 
+        String exprToLLVM = Accumulator(expr, argu, "right");
+
+        LLVMCodeAccumulation += "\t%_" + this.register + " = add i32 1, " + exprToLLVM + "\n";
+        this.register++;
+        LLVMCodeAccumulation += "\t%_" + this.register + " = icmp sge i32 %_" + (this.register - 1) +", 1\n";
+        LLVMCodeAccumulation += "\tbr i1 %_" + (this.register - 1) + ", label %nsz_ok_"+ this.label+ ", label %nsz_err_"+ this.label+ "\n\n";
+        LLVMCodeAccumulation += "\tnsz_err_"+ this.label+ ":\n";
+        LLVMCodeAccumulation += "\tcall void @throw_nsz()\n";
+        LLVMCodeAccumulation += "\tbr label %nsz_ok_"+ this.label+ "\n\n";
+        LLVMCodeAccumulation += "\tnsz_ok_"+ this.label+ ":\n";
+        LLVMCodeAccumulation += "\t%_" + (this.register) + " = call " + typeInLLVM("int[]") + " @calloc(i32 %_" + exprToLLVM + ", i32 4)\n";
+        this.label++;
+        return "%_" + (this.register);
+   }
 
 
 
-//    /**
-//     * f0 -> "!"
-//     * f1 -> Clause()
-//     */
-//    public String visit(NotExpression n, Class argu) throws Exception {
-//         String clause = n.f1.accept(this, argu);
-//         this.register++;
-//         return "%_"+ (this.register-1) +" = xor i1 1, " + clause;
-//    }
+   /**
+    * f0 -> "!"
+    * f1 -> Clause()
+    */
+   public String visit(NotExpression n, Class argu) throws Exception {
+        String clause = n.f1.accept(this, argu);
+        String clauseToLLVM = Accumulator(clause, argu, "right");
+        this.register++;
+        LLVMCodeAccumulation += "\t%_"+ (this.register-1) +" = xor i1 1, " + clauseToLLVM + "\n";
+        return "%_" + this.register;
+   }
 
-//     /**
-//     * f0 -> "this"
-//     */
-//    public String visit(ThisExpression n, Class argu) throws Exception {
-//         this.register += 2;
-//         return "%_"+ (this.register-2) + " = bitcast i8* %this to i8***\n" + (this.register-1) + " = load i8**, i8***" + (this.register-2) + "\n";
-//    }
+    /**
+    * f0 -> "this"
+    */
+   public String visit(ThisExpression n, Class argu) throws Exception {
+        this.register += 2;
+        return "\t%_"+ (this.register-2) + " = bitcast i8* %this to i8***\n\t" + (this.register-1) + " = load i8**, i8***" + (this.register-2) + "\n";
+   }
 
-//    /**
-//     * f0 -> "("
-//     * f1 -> Expression()
-//     * f2 -> ")"
-//     */
-//    public String visit(BracketExpression n, Class argu) throws Exception {
-//         String expr = n.f1.accept(this, argu);
-//         if (expr.equals("int") || expr.equals("boolean") || expr.equals("int[]") || expr.equals("boolean[]") ) { // basic type
-//             return expr;
-//         }
-//         if (this.table.getClass(expr) != null) {       // class instance
-//             return this.table.getClass(expr).name;
-//         } 
-//         return isVar(expr, argu);   // identifier of basic type  // otherwise exception
-//    }
+   /**
+    * f0 -> "("
+    * f1 -> Expression()
+    * f2 -> ")"
+    */
+   public String visit(BracketExpression n, Class argu) throws Exception {
+        String expr = n.f1.accept(this, argu);
+        return expr;   
+   }
 }
