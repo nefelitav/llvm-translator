@@ -1,6 +1,7 @@
 all: compile
 
 compile:
+	rm -rf results/
 	java -jar ./jtb132di.jar -te minijava/minijava.jj
 	java -jar ./javacc5.jar minijava/minijava-jtb.jj
 	javac ./src/*.java
