@@ -799,6 +799,10 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 
         Integer before = this.register;
 
+        if (isVar(expr, argu) != null) {
+            this.lastAllocation = isVar(expr, argu);
+        } 
+
         Method m = (this.table.getClass(this.lastAllocation).methods).get(method);
         if (args != null) {
             m = (this.table.getClass(this.lastAllocation).methods).get(method);
