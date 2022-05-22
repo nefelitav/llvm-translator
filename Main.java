@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.io.FileWriter;   
+import java.io.File;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -11,6 +13,7 @@ public class Main {
             System.err.println("Usage: java [MainClassName] [file1] [file2] ... [fileN]");
             System.exit(1);
         }
+
         FileInputStream fis = null;
         for(String file : args) {
             try {
@@ -40,11 +43,15 @@ public class Main {
                     System.out.println(e);
                     System.out.println();
                 }
+                String filename = (file.split("/")[(file.split("/")).length-1]).split("\\.")[0];
+                File llFile = new File("./results/" + filename + ".ll");
+                llFile.getParentFile().mkdirs();
+                FileWriter writer = new FileWriter(llFile);
                 LLVMGenerator LLVMGenerator = new LLVMGenerator(table);
                 root.accept(LLVMGenerator, null);
-
-                LLVMGenerator.printResult();
-
+                writer.append(LLVMGenerator.getResult());
+                // LLVMGenerator.printResult();
+                writer.close();
             }
             catch (ParseException ex) {
                 System.out.println(ex.getMessage());
