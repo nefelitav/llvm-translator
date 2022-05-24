@@ -12,5 +12,4 @@ clean:
 	rm -f MiniJavaParser.java MiniJavaParserConstants.java MiniJavaParserTokenManager.java 
 	rm -f ParseException.java Token.java TokenMgrError.java JavaCharStream.java
 	rm -rf visitor syntaxtree
-	rm -rf results/
 	rm -rf out1
