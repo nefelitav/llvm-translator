@@ -44,11 +44,15 @@ public class Main {
                     System.out.println();
                 }
                 String filename = (file.split("/")[(file.split("/")).length-1]).split("\\.")[0];
+                // add .ll file to results folder
                 File llFile = new File("./results/" + filename + ".ll");
+                // create folder if it doesnt exist
                 llFile.getParentFile().mkdirs();
                 FileWriter writer = new FileWriter(llFile);
+                // generate code
                 LLVMGenerator LLVMGenerator = new LLVMGenerator(table);
                 root.accept(LLVMGenerator, null);
+                // write generated code to file
                 writer.append(LLVMGenerator.getResult());
                 // LLVMGenerator.printResult();
                 writer.close();

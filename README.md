@@ -11,8 +11,28 @@ This program performs type checking on some source files, written in Minijava (a
 
 ## LLVM Translator (Intermediate Code Generation)
 
-## Compile & Run
+This program generates code to LLVM IR using one more tree visitor. This visitor translates Minijava code to LLVM, accumulating the generated code into a string that is then printed in a file. Also, a vtable is created for each class, based on the methods' offsets, which were created by the first visitor and stored in the Symbol Table. In addition to the checks made by the first and the second visitor, we implement runtime checks to ensure that we do not access unallocated memory. In almost every non-terminal visit function, the "Accumulator" function is triggered, which performs the right actions based on the type of the given input/expression.
+
+## Dependencies
+
+```
+$ sudo apt update && sudo apt install clang
+```
+
+## Compile & Parse
 
 ```
 $ make && java Main [file1] [file2] ... [fileN]
+```
+
+## Generate Code & Run LLVM program
+
+```
+$ clang -o out1 file1.ll && ./out1
+```
+
+## Run all programs
+
+```
+$ ./run_all.sh
 ```

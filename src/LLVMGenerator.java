@@ -14,7 +14,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
     Method currMethod;
     String LLVMCodeAccumulation = "";
     String result = "";
-    String lastAllocation = "";
+    String caller = "";
     Integer bitcast = 0;
 
     public void printResult() {
@@ -24,7 +24,9 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
     public String getResult() {
         return this.result;
     }
-    
+
+
+    // translate type to LLVM
     public String typeInLLVM(String typeInMinijava) {
         switch(typeInMinijava) {
             case "int":
@@ -53,12 +55,13 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
 
     public Integer objectSize(String object) {
         Variable lastField = null;
-
+        // get last field of class
         for (Map.Entry<String, Variable> entry : this.table.getClass(object).fields.entrySet()) {
             if (lastField == null || entry.getValue().offset.compareTo(lastField.offset) > 0) {
                 lastField = entry.getValue();
             }
         }
+        // if null, find the last field of parent class etc
         Class parentClass = this.table.getClass(object).extending;
         while (parentClass != null && lastField == null) {
             for (Map.Entry<String, Variable> entry : parentClass.fields.entrySet()) {
@@ -74,7 +77,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
     }
 
     public String isVar(String possibleVar, Class currClass) {
-        if (this.currMethod.variables.get(possibleVar) != null) { // first check if local variable, then field
+        if (this.currMethod.variables.get(possibleVar) != null) { 
             return this.currMethod.variables.get(possibleVar).type;
         } else if (this.currMethod.parameters.get(possibleVar) != null) {
             return this.currMethod.parameters.get(possibleVar).type;
@@ -93,7 +96,9 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         return null;
     }
 
+    // this function accumulates code according to the type of the input/expression
     public String Accumulator(String input, Class currClass, String side) {
+        // constant, boolean or integer
         if (input.equals("true")) {
             return "1";
         }
@@ -103,6 +108,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         if (input.chars().allMatch( Character::isDigit )) {
             return input.toString();
         }
+        // field, either of this class or a parent one
         if (currClass.fields.get(input) != null) {
             checkRegisterNumber();
             String fieldType = currClass.fields.get(input).type;
@@ -136,6 +142,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
                 temp = temp.extending;
             }
         }
+        // variable
         String type;
         if ((type = isVar(input, currClass)) != null) {
             if (side == "right") {
@@ -149,18 +156,20 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         return input;
     }
 
+    // if this register has already been used, increment the counter
     public void checkRegisterNumber() {
         if ((this.LLVMCodeAccumulation).contains("%_" + this.register + " ")) {
             this.register++;
         }
     }
-
+    // if this label has already been used, increment the counter
     public void checkLabelNumber() {
         if ((this.LLVMCodeAccumulation).contains(this.label + ":")) {
             this.label++;
         }
     }
 
+    // number of methods a class has (parent methods are included too)
     public Integer getMethodsNumber(String className) {
         Set<String> methodNames = this.table.getClass(className).methods.keySet();
         Integer methodNum = this.table.getClass(className).methods.size();
@@ -186,6 +195,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         this.currMethod = null;
         Set<String> classNames = t.table.keySet();
         outerloop : for (String className : classNames) {
+            // get number of class methods
             Set<String> methodNames = t.table.get(className).methods.keySet();
             Integer methodNum = t.table.get(className).methods.size();
             Integer parentMethodNum = 0;
@@ -377,6 +387,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         String methodParams = n.f4.accept(this, argu);
         String expr = n.f10.accept(this, argu);
 
+        // every method has "this" as the first parameter
         if (methodParams == null) {
             methodParams = "i8* %this";
         }
@@ -389,6 +400,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
                 i++;
                 continue;
             }
+            // get variable name
             LLVMCodeAccumulation += "\t%" + ((param.trim()).split(" ")[1]).split("\\.")[1] + " = alloca " +  (param.trim()).split(" ")[0] + "\n";
             LLVMCodeAccumulation += "\tstore " + (param.trim()).split(" ")[0] + " %." + ((param.trim()).split(" ")[1]).split("\\.")[1] + ", " +  (param.trim()).split(" ")[0] + "* " + "%" + ((param.trim()).split(" ")[1]).split("\\.")[1] + "\n";
             i++;
@@ -522,7 +534,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         LLVMCodeAccumulation += "\t%_" + (this.register + 2) + " = getelementptr ["+ getMethodsNumber(type) +" x i8*], ["+getMethodsNumber(type)+" x i8*]* @." + type + "_vtable, i32 0, i32 0\n";
         LLVMCodeAccumulation += "\tstore i8** %_" + (this.register + 2) + ", i8*** %_" + (this.register + 1) + "\n";
         this.register += 3;
-        this.lastAllocation = type;
+        this.caller = type;
 		return "%_" + (this.register - 3);
    }
 
@@ -784,7 +796,6 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         checkRegisterNumber();
         LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i32, i32* " + exprToLLVM + "\n";
         return "$_" + (this.register);
-
    }
 
    /**
@@ -811,23 +822,21 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         }
 
         if (expr.equals("%this")) {
-            this.lastAllocation = argu.name;
+            this.caller = argu.name; // caller is the current class
         }
 
-        if ((this.table.getClass(this.lastAllocation).methods).get(method) == null) {
+        if ((this.table.getClass(this.caller).methods).get(method) == null) {
             if (argu.extending != null) {
                 Class temp = argu.extending;
                 while(temp != null) {
                     if ((temp.methods).get(method) != null) {
-                        this.lastAllocation = temp.name;
+                        this.caller = temp.name; // parent
                         break;
                     }
                     temp = temp.extending;
                 }
             }
         }
-
-
 
         if (isVar(expr, argu) == null ) {
             LLVMCodeAccumulation += "\t%_" + (this.register) + " = bitcast i8* " + expr +" to i8***" + "\n";
@@ -840,14 +849,12 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         LLVMCodeAccumulation += "\t%_" + (this.register) + " = load i8**, i8*** %_" + (second-1) + "\n";
         this.register++;
         Integer fourth = this.register;
-        
 
         if (isVar(expr, argu) != null) {
-            this.lastAllocation = isVar(expr, argu);
+            this.caller = isVar(expr, argu);
         } 
 
-
-        Method m = (this.table.getClass(this.lastAllocation).methods).get(method);
+        Method m = (this.table.getClass(this.caller).methods).get(method);
         LLVMCodeAccumulation += "\t%_" + (this.register) + " = getelementptr i8*, i8** %_" + third +", i32 " +  (m.offset/8) + "\n";
         this.register++;
         Integer fifth = this.register;
@@ -856,7 +863,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
         Integer sixth = this.register;
         Integer before = this.register;
         if (args != null) {
-            m = (this.table.getClass(this.lastAllocation).methods).get(method);
+            m = (this.table.getClass(this.caller).methods).get(method);
             Set entrySet = m.parameters.entrySet();
             Iterator it = entrySet.iterator();
             List arguments = Arrays.asList(args.split(","));
@@ -868,6 +875,7 @@ public class LLVMGenerator extends GJDepthFirst<String, Class> {
                 // System.out.println(typeInLLVM(value.type) + " " + arg);
                 String argToLLVM = Accumulator(arg, argu, "right");
                 checkRegisterNumber();
+                // get parameters' values and types
                 argsTypes += ", " + typeInLLVM(value.type);
                 argsNames += ", " + typeInLLVM(value.type) + " " + argToLLVM;
             }
