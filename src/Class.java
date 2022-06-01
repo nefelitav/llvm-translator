@@ -91,7 +91,7 @@ public class Class {
 
             }
 
-        } else {
+        }// else {
             if ((this.methods).size() == 1) { // first method of class
                 if (this.extending != null && this.extending.methods.get(methodName) == null) {
                     table.methodOffset = table.methodOffset + table.methodOffsetNext; // increment to get current method's position
@@ -108,6 +108,6 @@ public class Class {
                 table.methodOffsetNext = offset;                              // next method's position
             }
             
-        }
+        //}
     }
 }

@@ -721,14 +721,14 @@ define i1 @Tree.Delete(i8* %this, i32 %.v_key) {
 
 	exp_res_23:
 	%_61 = phi i1  [ 0, %exp_res_20 ], [ %_60, %exp_res_22 ]
-	br i1 %_61, label %if_then_23, label %if_else_23
+	br i1 %_61, label %if_then_24, label %if_else_24
 
 
-	if_then_23:
+	if_then_24:
 	store i1 1, i1* %ntb
-	br label %if_end_23
+	br label %if_end_24
 
-	if_else_23:
+	if_else_24:
 	%_62 = bitcast i8* %this to i8***
 	%_63 = load i8**, i8*** %_62
 	%_64 = getelementptr i8*, i8** %_63, i32 14
@@ -738,9 +738,9 @@ define i1 @Tree.Delete(i8* %this, i32 %.v_key) {
 	%_68 = bitcast i8* %_65 to i1 (i8* , i8*, i8*)*
 	%_69 = call i1 %_68(i8* %this , i8* %_66, i8* %_67)
 	store i1 %_69, i1* %ntb
-	br label %if_end_23
+	br label %if_end_24
 
-	if_end_23:
+	if_end_24:
 	br label %if_end_19
 
 	if_else_19:
@@ -791,10 +791,10 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_4 = load i8*, i8** %_3
 	%_5 = bitcast i8* %_4 to i1 (i8* )*
 	%_6 = call i1 %_5(i8* %_0 )
-	br i1 %_6, label %if_then_29, label %if_else_29
+	br i1 %_6, label %if_then_30, label %if_else_30
 
 
-	if_then_29:
+	if_then_30:
 	%_7 = bitcast i8* %this to i8***
 	%_8 = load i8**, i8*** %_7
 	%_9 = getelementptr i8*, i8** %_8, i32 16
@@ -804,9 +804,9 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_13 = bitcast i8* %_10 to i1 (i8* , i8*, i8*)*
 	%_14 = call i1 %_13(i8* %this , i8* %_11, i8* %_12)
 	store i1 %_14, i1* %ntb
-	br label %if_end_29
+	br label %if_end_30
 
-	if_else_29:
+	if_else_30:
 	%_15 = load i8*, i8** %c_node
 	%_16 = bitcast i8* %_15 to i8***
 	%_17 = load i8**, i8*** %_16
@@ -814,10 +814,10 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_19 = load i8*, i8** %_18
 	%_20 = bitcast i8* %_19 to i1 (i8* )*
 	%_21 = call i1 %_20(i8* %_15 )
-	br i1 %_21, label %if_then_30, label %if_else_30
+	br i1 %_21, label %if_then_31, label %if_else_31
 
 
-	if_then_30:
+	if_then_31:
 	%_22 = bitcast i8* %this to i8***
 	%_23 = load i8**, i8*** %_22
 	%_24 = getelementptr i8*, i8** %_23, i32 15
@@ -827,9 +827,9 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_28 = bitcast i8* %_25 to i1 (i8* , i8*, i8*)*
 	%_29 = call i1 %_28(i8* %this , i8* %_26, i8* %_27)
 	store i1 %_29, i1* %ntb
-	br label %if_end_30
+	br label %if_end_31
 
-	if_else_30:
+	if_else_31:
 	%_30 = load i8*, i8** %c_node
 	%_31 = bitcast i8* %_30 to i8***
 	%_32 = load i8**, i8*** %_31
@@ -860,10 +860,10 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_55 = load i32, i32* %auxkey2
 	%_56 = bitcast i8* %_53 to i1 (i8* , i32, i32)*
 	%_57 = call i1 %_56(i8* %this , i32 %_54, i32 %_55)
-	br i1 %_57, label %if_then_31, label %if_else_31
+	br i1 %_57, label %if_then_32, label %if_else_32
 
 
-	if_then_31:
+	if_then_32:
 	%_58 = load i8*, i8** %p_node
 	%_59 = bitcast i8* %_58 to i8***
 	%_60 = load i8**, i8*** %_59
@@ -884,9 +884,9 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_73 = bitcast i8* %_72 to i1 (i8* , i1)*
 	%_74 = call i1 %_73(i8* %_68 , i1 0)
 	store i1 %_74, i1* %ntb
-	br label %if_end_31
+	br label %if_end_32
 
-	if_else_31:
+	if_else_32:
 	%_75 = load i8*, i8** %p_node
 	%_76 = bitcast i8* %_75 to i8***
 	%_77 = load i8**, i8*** %_76
@@ -907,15 +907,15 @@ define i1 @Tree.Remove(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_90 = bitcast i8* %_89 to i1 (i8* , i1)*
 	%_91 = call i1 %_90(i8* %_85 , i1 0)
 	store i1 %_91, i1* %ntb
+	br label %if_end_32
+
+	if_end_32:
 	br label %if_end_31
 
 	if_end_31:
 	br label %if_end_30
 
 	if_end_30:
-	br label %if_end_29
-
-	if_end_29:
 
 
 	ret i1 1
@@ -928,9 +928,9 @@ define i1 @Tree.RemoveRight(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%c_node = alloca i8*
 	store i8* %.c_node, i8** %c_node
 	%ntb = alloca i1
-	br label %loopstart35
+	br label %loopstart36
 
-	loopstart35:
+	loopstart36:
 	%_0 = load i8*, i8** %c_node
 	%_1 = bitcast i8* %_0 to i8***
 	%_2 = load i8**, i8*** %_1
@@ -938,9 +938,9 @@ define i1 @Tree.RemoveRight(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_4 = load i8*, i8** %_3
 	%_5 = bitcast i8* %_4 to i1 (i8* )*
 	%_6 = call i1 %_5(i8* %_0 )
-	br i1 %_6, label %next35, label %end35
+	br i1 %_6, label %next36, label %end36
 
-	next35:
+	next36:
 	%_7 = load i8*, i8** %c_node
 	%_8 = load i8*, i8** %c_node
 	%_9 = bitcast i8* %_8 to i8***
@@ -972,10 +972,10 @@ define i1 @Tree.RemoveRight(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_33 = bitcast i8* %_32 to i8* (i8* )*
 	%_34 = call i8* %_33(i8* %_28 )
 	store i8* %_34, i8** %c_node
-	br label %loopstart35
+	br label %loopstart36
 
 
-	end35:
+	end36:
 	%_35 = load i8*, i8** %p_node
 	%_36 = bitcast i8* %_35 to i8***
 	%_37 = load i8**, i8*** %_36
@@ -1008,9 +1008,9 @@ define i1 @Tree.RemoveLeft(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%c_node = alloca i8*
 	store i8* %.c_node, i8** %c_node
 	%ntb = alloca i1
-	br label %loopstart37
+	br label %loopstart38
 
-	loopstart37:
+	loopstart38:
 	%_0 = load i8*, i8** %c_node
 	%_1 = bitcast i8* %_0 to i8***
 	%_2 = load i8**, i8*** %_1
@@ -1018,9 +1018,9 @@ define i1 @Tree.RemoveLeft(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_4 = load i8*, i8** %_3
 	%_5 = bitcast i8* %_4 to i1 (i8* )*
 	%_6 = call i1 %_5(i8* %_0 )
-	br i1 %_6, label %next37, label %end37
+	br i1 %_6, label %next38, label %end38
 
-	next37:
+	next38:
 	%_7 = load i8*, i8** %c_node
 	%_8 = load i8*, i8** %c_node
 	%_9 = bitcast i8* %_8 to i8***
@@ -1052,10 +1052,10 @@ define i1 @Tree.RemoveLeft(i8* %this, i8* %.p_node,i8* %.c_node) {
 	%_33 = bitcast i8* %_32 to i8* (i8* )*
 	%_34 = call i8* %_33(i8* %_28 )
 	store i8* %_34, i8** %c_node
-	br label %loopstart37
+	br label %loopstart38
 
 
-	end37:
+	end38:
 	%_35 = load i8*, i8** %p_node
 	%_36 = bitcast i8* %_35 to i8***
 	%_37 = load i8**, i8*** %_36
@@ -1092,13 +1092,13 @@ define i32 @Tree.Search(i8* %this, i32 %.v_key) {
 	store i8* %this, i8** %current_node
 	store i1 1, i1* %cont
 	store i32 0, i32* %ifound
-	br label %loopstart39
+	br label %loopstart40
 
-	loopstart39:
+	loopstart40:
 	%_0 = load i1, i1* %cont
-	br i1 %_0, label %next39, label %end39
+	br i1 %_0, label %next40, label %end40
 
-	next39:
+	next40:
 	%_1 = load i8*, i8** %current_node
 	%_2 = bitcast i8* %_1 to i8***
 	%_3 = load i8**, i8*** %_2
@@ -1110,10 +1110,10 @@ define i32 @Tree.Search(i8* %this, i32 %.v_key) {
 	%_8 = load i32, i32* %v_key
 	%_9 = load i32, i32* %key_aux
 	%_10 = icmp slt i32 %_8, %_9
-	br i1 %_10, label %if_then_40, label %if_else_40
+	br i1 %_10, label %if_then_41, label %if_else_41
 
 
-	if_then_40:
+	if_then_41:
 	%_11 = load i8*, i8** %current_node
 	%_12 = bitcast i8* %_11 to i8***
 	%_13 = load i8**, i8*** %_12
@@ -1121,10 +1121,10 @@ define i32 @Tree.Search(i8* %this, i32 %.v_key) {
 	%_15 = load i8*, i8** %_14
 	%_16 = bitcast i8* %_15 to i1 (i8* )*
 	%_17 = call i1 %_16(i8* %_11 )
-	br i1 %_17, label %if_then_41, label %if_else_41
+	br i1 %_17, label %if_then_42, label %if_else_42
 
 
-	if_then_41:
+	if_then_42:
 	%_18 = load i8*, i8** %current_node
 	%_19 = bitcast i8* %_18 to i8***
 	%_20 = load i8**, i8*** %_19
@@ -1133,23 +1133,23 @@ define i32 @Tree.Search(i8* %this, i32 %.v_key) {
 	%_23 = bitcast i8* %_22 to i8* (i8* )*
 	%_24 = call i8* %_23(i8* %_18 )
 	store i8* %_24, i8** %current_node
+	br label %if_end_42
+
+	if_else_42:
+	store i1 0, i1* %cont
+	br label %if_end_42
+
+	if_end_42:
 	br label %if_end_41
 
 	if_else_41:
-	store i1 0, i1* %cont
-	br label %if_end_41
-
-	if_end_41:
-	br label %if_end_40
-
-	if_else_40:
 	%_25 = load i32, i32* %key_aux
 	%_26 = load i32, i32* %v_key
 	%_27 = icmp slt i32 %_25, %_26
-	br i1 %_27, label %if_then_43, label %if_else_43
+	br i1 %_27, label %if_then_44, label %if_else_44
 
 
-	if_then_43:
+	if_then_44:
 	%_28 = load i8*, i8** %current_node
 	%_29 = bitcast i8* %_28 to i8***
 	%_30 = load i8**, i8*** %_29
@@ -1157,10 +1157,10 @@ define i32 @Tree.Search(i8* %this, i32 %.v_key) {
 	%_32 = load i8*, i8** %_31
 	%_33 = bitcast i8* %_32 to i1 (i8* )*
 	%_34 = call i1 %_33(i8* %_28 )
-	br i1 %_34, label %if_then_44, label %if_else_44
+	br i1 %_34, label %if_then_45, label %if_else_45
 
 
-	if_then_44:
+	if_then_45:
 	%_35 = load i8*, i8** %current_node
 	%_36 = bitcast i8* %_35 to i8***
 	%_37 = load i8**, i8*** %_36
@@ -1169,28 +1169,28 @@ define i32 @Tree.Search(i8* %this, i32 %.v_key) {
 	%_40 = bitcast i8* %_39 to i8* (i8* )*
 	%_41 = call i8* %_40(i8* %_35 )
 	store i8* %_41, i8** %current_node
+	br label %if_end_45
+
+	if_else_45:
+	store i1 0, i1* %cont
+	br label %if_end_45
+
+	if_end_45:
 	br label %if_end_44
 
 	if_else_44:
+	store i32 1, i32* %ifound
 	store i1 0, i1* %cont
 	br label %if_end_44
 
 	if_end_44:
-	br label %if_end_43
+	br label %if_end_41
 
-	if_else_43:
-	store i32 1, i32* %ifound
-	store i1 0, i1* %cont
-	br label %if_end_43
-
-	if_end_43:
-	br label %if_end_40
-
-	if_end_40:
-	br label %loopstart39
+	if_end_41:
+	br label %loopstart40
 
 
-	end39:
+	end40:
 
 	%_42 = load i32, i32* %ifound
 
@@ -1227,10 +1227,10 @@ define i1 @Tree.RecPrint(i8* %this, i8* %.node) {
 	%_4 = load i8*, i8** %_3
 	%_5 = bitcast i8* %_4 to i1 (i8* )*
 	%_6 = call i1 %_5(i8* %_0 )
-	br i1 %_6, label %if_then_49, label %if_else_49
+	br i1 %_6, label %if_then_50, label %if_else_50
 
 
-	if_then_49:
+	if_then_50:
 	%_7 = load i8*, i8** %node
 	%_8 = bitcast i8* %_7 to i8***
 	%_9 = load i8**, i8*** %_8
@@ -1245,13 +1245,13 @@ define i1 @Tree.RecPrint(i8* %this, i8* %.node) {
 	%_18 = bitcast i8* %_17 to i1 (i8* , i8*)*
 	%_19 = call i1 %_18(i8* %this , i8* %_13)
 	store i1 %_19, i1* %ntb
-	br label %if_end_49
+	br label %if_end_50
 
-	if_else_49:
+	if_else_50:
 	store i1 1, i1* %ntb
-	br label %if_end_49
+	br label %if_end_50
 
-	if_end_49:
+	if_end_50:
 	%_20 = load i8*, i8** %node
 	%_21 = bitcast i8* %_20 to i8***
 	%_22 = load i8**, i8*** %_21
@@ -1267,10 +1267,10 @@ define i1 @Tree.RecPrint(i8* %this, i8* %.node) {
 	%_31 = load i8*, i8** %_30
 	%_32 = bitcast i8* %_31 to i1 (i8* )*
 	%_33 = call i1 %_32(i8* %_27 )
-	br i1 %_33, label %if_then_51, label %if_else_51
+	br i1 %_33, label %if_then_52, label %if_else_52
 
 
-	if_then_51:
+	if_then_52:
 	%_34 = load i8*, i8** %node
 	%_35 = bitcast i8* %_34 to i8***
 	%_36 = load i8**, i8*** %_35
@@ -1285,13 +1285,13 @@ define i1 @Tree.RecPrint(i8* %this, i8* %.node) {
 	%_45 = bitcast i8* %_44 to i1 (i8* , i8*)*
 	%_46 = call i1 %_45(i8* %this , i8* %_40)
 	store i1 %_46, i1* %ntb
-	br label %if_end_51
+	br label %if_end_52
 
-	if_else_51:
+	if_else_52:
 	store i1 1, i1* %ntb
-	br label %if_end_51
+	br label %if_end_52
 
-	if_end_51:
+	if_end_52:
 
 
 	ret i1 1

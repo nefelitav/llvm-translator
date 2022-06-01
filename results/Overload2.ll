@@ -1,4 +1,8 @@
-@.And_vtable = global [0 x i8*] []
+@.Overload2_vtable = global [0 x i8*] []
+
+@.A_vtable = global [1 x i8*] [
+	i8* bitcast (i32 (i8*)* @A.x to i8*)
+]
 
 declare i8* @calloc(i32, i32)
 declare i32 @printf(i8*, ...)
@@ -28,41 +32,14 @@ define void @throw_nsz() {
 	ret void
 }
 define i32 @main() {
-	%b = alloca i1
-	%c = alloca i1
-	%x = alloca i32
-	store i1 0, i1* %b
-	store i1 1, i1* %c
-	%_0 = load i1, i1* %b
-	br i1 %_0, label %exp_res_1, label %exp_res_0
-
-	exp_res_0:
-	br label %exp_res_3
-
-	exp_res_1:
-	%_1 = load i1, i1* %c
-	br label %exp_res_2
-
-	exp_res_2:
-	br label %exp_res_3
-
-	exp_res_3:
-	%_2 = phi i1  [ 0, %exp_res_0 ], [ %_1, %exp_res_2 ]
-	br i1 %_2, label %if_then_4, label %if_else_4
-
-
-	if_then_4:
-	store i32 0, i32* %x
-	br label %if_end_4
-
-	if_else_4:
-	store i32 1, i32* %x
-	br label %if_end_4
-
-	if_end_4:
-	%_3 = load i32, i32* %x
-	call void (i32) @print_int(i32 %_3)
 	ret i32 0
+
+}
+
+define i32 @A.x(i8* %this) {
+
+
+	ret i32 1
 
 }
 

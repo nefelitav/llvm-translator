@@ -1,4 +1,8 @@
-@.And_vtable = global [0 x i8*] []
+@.test62_vtable = global [0 x i8*] []
+
+@.Test_vtable = global [1 x i8*] [
+	i8* bitcast (i32 (i8*)* @Test.start to i8*)
+]
 
 declare i8* @calloc(i32, i32)
 declare i32 @printf(i8*, ...)
@@ -28,40 +32,28 @@ define void @throw_nsz() {
 	ret void
 }
 define i32 @main() {
-	%b = alloca i1
-	%c = alloca i1
-	%x = alloca i32
-	store i1 0, i1* %b
-	store i1 1, i1* %c
-	%_0 = load i1, i1* %b
-	br i1 %_0, label %exp_res_1, label %exp_res_0
+	%_0 = call i8* @calloc(i32 1, i32 16)
+	%_1 = bitcast i8* %_0 to i8***
+	%_2 = getelementptr [1 x i8*], [1 x i8*]* @.Test_vtable, i32 0, i32 0
+	store i8** %_2, i8*** %_1
+	%_3 = bitcast i8* %_0 to i8***
+	%_4 = load i8**, i8*** %_3
+	%_5 = getelementptr i8*, i8** %_4, i32 0
+	%_6 = load i8*, i8** %_5
+	%_7 = bitcast i8* %_6 to i32 (i8* )*
+	%_8 = call i32 %_7(i8* %_0 )
+	call void (i32) @print_int(i32 %_8)
+	ret i32 0
 
-	exp_res_0:
-	br label %exp_res_3
+}
 
-	exp_res_1:
-	%_1 = load i1, i1* %c
-	br label %exp_res_2
+define i32 @Test.start(i8* %this) {
 
-	exp_res_2:
-	br label %exp_res_3
-
-	exp_res_3:
-	%_2 = phi i1  [ 0, %exp_res_0 ], [ %_1, %exp_res_2 ]
-	br i1 %_2, label %if_then_4, label %if_else_4
+	%_0 = getelementptr i8, i8* %this, i32 8
+	%_1 = bitcast i8* %_0 to i8**
+	store i8* %this, i8** %_1
 
 
-	if_then_4:
-	store i32 0, i32* %x
-	br label %if_end_4
-
-	if_else_4:
-	store i32 1, i32* %x
-	br label %if_end_4
-
-	if_end_4:
-	%_3 = load i32, i32* %x
-	call void (i32) @print_int(i32 %_3)
 	ret i32 0
 
 }

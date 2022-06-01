@@ -449,17 +449,17 @@ define i8* @List.Delete(i8* %this, i8* %.e) {
 	%_17 = load i8*, i8** %var_elem
 	%_18 = bitcast i8* %_16 to i1 (i8* , i8*)*
 	%_19 = call i1 %_18(i8* %_12 , i8* %_17)
-	br i1 %_19, label %if_then_18, label %if_else_18
-
-
-	if_then_18:
-	store i1 1, i1* %ret_val
-	%_20 = load i32, i32* %aux04
-	%_21 = icmp slt i32 %_20, 0
-	br i1 %_21, label %if_then_19, label %if_else_19
+	br i1 %_19, label %if_then_19, label %if_else_19
 
 
 	if_then_19:
+	store i1 1, i1* %ret_val
+	%_20 = load i32, i32* %aux04
+	%_21 = icmp slt i32 %_20, 0
+	br i1 %_21, label %if_then_20, label %if_else_20
+
+
+	if_then_20:
 	%_22 = load i8*, i8** %aux01
 	%_23 = bitcast i8* %_22 to i8***
 	%_24 = load i8**, i8*** %_23
@@ -468,9 +468,9 @@ define i8* @List.Delete(i8* %this, i8* %.e) {
 	%_27 = bitcast i8* %_26 to i8* (i8* )*
 	%_28 = call i8* %_27(i8* %_22 )
 	store i8* %_28, i8** %my_head
-	br label %if_end_19
+	br label %if_end_20
 
-	if_else_19:
+	if_else_20:
 	%_29 = sub i32 0, 555
 	call void (i32) @print_int(i32 %_29)
 	%_30 = load i8*, i8** %prev
@@ -490,22 +490,22 @@ define i8* @List.Delete(i8* %this, i8* %.e) {
 	store i1 %_43, i1* %aux05
 	%_44 = sub i32 0, 555
 	call void (i32) @print_int(i32 %_44)
+	br label %if_end_20
+
+	if_end_20:
+	br label %if_end_19
+
+	if_else_19:
+	store i32 0, i32* %nt
 	br label %if_end_19
 
 	if_end_19:
-	br label %if_end_18
-
-	if_else_18:
-	store i32 0, i32* %nt
-	br label %if_end_18
-
-	if_end_18:
 	%_45 = load i1, i1* %ret_val
 	%_46 = xor i1 1, %_45
-	br i1 %_46, label %if_then_22, label %if_else_22
+	br i1 %_46, label %if_then_23, label %if_else_23
 
 
-	if_then_22:
+	if_then_23:
 	%_47 = load i8*, i8** %aux01
 	store i8* %_47, i8** %prev
 	%_48 = load i8*, i8** %aux01
@@ -533,13 +533,13 @@ define i8* @List.Delete(i8* %this, i8* %.e) {
 	%_68 = call i8* %_67(i8* %_62 )
 	store i8* %_68, i8** %var_elem
 	store i32 1, i32* %aux04
-	br label %if_end_22
+	br label %if_end_23
 
-	if_else_22:
+	if_else_23:
 	store i32 0, i32* %nt
-	br label %if_end_22
+	br label %if_end_23
 
-	if_end_22:
+	if_end_23:
 	br label %loopstart14
 
 
@@ -571,14 +571,14 @@ define i32 @List.Search(i8* %this, i8* %.e) {
 	%_4 = bitcast i8* %_3 to i8**
 	%_5 = load i8*, i8** %_4
 	store i8* %_5, i8** %var_elem
-	br label %loopstart25
+	br label %loopstart26
 
-	loopstart25:
+	loopstart26:
 	%_6 = load i1, i1* %var_end
 	%_7 = xor i1 1, %_6
-	br i1 %_7, label %next25, label %end25
+	br i1 %_7, label %next26, label %end26
 
-	next25:
+	next26:
 	%_8 = load i8*, i8** %e
 	%_9 = bitcast i8* %_8 to i8***
 	%_10 = load i8**, i8*** %_9
@@ -587,18 +587,18 @@ define i32 @List.Search(i8* %this, i8* %.e) {
 	%_13 = load i8*, i8** %var_elem
 	%_14 = bitcast i8* %_12 to i1 (i8* , i8*)*
 	%_15 = call i1 %_14(i8* %_8 , i8* %_13)
-	br i1 %_15, label %if_then_26, label %if_else_26
+	br i1 %_15, label %if_then_27, label %if_else_27
 
 
-	if_then_26:
+	if_then_27:
 	store i32 1, i32* %int_ret_val
-	br label %if_end_26
+	br label %if_end_27
 
-	if_else_26:
+	if_else_27:
 	store i32 0, i32* %nt
-	br label %if_end_26
+	br label %if_end_27
 
-	if_end_26:
+	if_end_27:
 	%_16 = load i8*, i8** %aux01
 	%_17 = bitcast i8* %_16 to i8***
 	%_18 = load i8**, i8*** %_17
@@ -623,10 +623,10 @@ define i32 @List.Search(i8* %this, i8* %.e) {
 	%_35 = bitcast i8* %_34 to i8* (i8* )*
 	%_36 = call i8* %_35(i8* %_30 )
 	store i8* %_36, i8** %var_elem
-	br label %loopstart25
+	br label %loopstart26
 
 
-	end25:
+	end26:
 
 	%_37 = load i32, i32* %int_ret_val
 
@@ -682,14 +682,14 @@ define i1 @List.Print(i8* %this) {
 	%_4 = bitcast i8* %_3 to i8**
 	%_5 = load i8*, i8** %_4
 	store i8* %_5, i8** %var_elem
-	br label %loopstart29
+	br label %loopstart30
 
-	loopstart29:
+	loopstart30:
 	%_6 = load i1, i1* %var_end
 	%_7 = xor i1 1, %_6
-	br i1 %_7, label %next29, label %end29
+	br i1 %_7, label %next30, label %end30
 
-	next29:
+	next30:
 	%_8 = load i8*, i8** %var_elem
 	%_9 = bitcast i8* %_8 to i8***
 	%_10 = load i8**, i8*** %_9
@@ -722,10 +722,10 @@ define i1 @List.Print(i8* %this) {
 	%_34 = bitcast i8* %_33 to i8* (i8* )*
 	%_35 = call i8* %_34(i8* %_29 )
 	store i8* %_35, i8** %var_elem
-	br label %loopstart29
+	br label %loopstart30
 
 
-	end29:
+	end30:
 
 
 	ret i1 1
