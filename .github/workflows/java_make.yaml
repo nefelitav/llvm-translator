@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Change permissions of script
+        run: |
+          chmod -R 777 run_all.sh
       - name: Run bash script
         run: ./run_all.sh
         shell: bash
